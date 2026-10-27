@@ -16,42 +16,51 @@ The name comes from Matthew 17:20. Jesus tells his friends that faith as small a
 
 ## Features
 
-- **Prayer list.** Add a request, write notes, give it a category, and mark it answered with a date.
-- **Answered-prayers history.** Look back on what has already been answered.
-- **Gentle reminders.** Customizable nudges through the day, meant to invite prayer rather than interrupt it.
-- **Encouraging verses.** Short passages about prayer, pulled from the YouVersion platform and shown in the app.
-- **A growing seed.** The mascot sprouts a little more as prayers move into the answered history.
+- **Prayer list.** Add a request, write notes, give it a category, log prayer moments, and mark it answered with a date and reflection.
+- **Answered-prayers history.** Look back on what has already been answered and preview all 6 stages of your mustard seed's growth.
+- **Gentle reminders.** Customizable daily nudges through the day (`expo-notifications`), meant to invite prayer rather than interrupt it.
+- **Encouraging verses.** Curated passages about prayer and mustard-seed faith (bundled in the Berean Standard Bible for immediate offline use) plus live passage fetching from the YouVersion Platform REST API (`api.youversion.com/v1`).
+- **A growing seed.** The custom SVG mustard-seed mascot (`MustardMascot`) sprouts from a tiny seed into a flourishing mustard tree with a resting bird (Matthew 13:32) as prayers move into the answered history.
 
-## Status
+## Tech Stack
 
-Early stage. This repository is in the idea phase: the direction above is the plan, and there is no app code here yet.
+- **Framework:** React Native + Expo (`expo-router`, TypeScript) — runs on iOS, Android, and Web
+- **Local Persistence:** Local-first on-device storage (`expo-sqlite` on iOS/Android with `AsyncStorage` fallback on Web)
+- **Notifications:** `expo-notifications` for daily scheduled gentle prayer nudges
+- **Scripture:** [YouVersion Platform](https://developers.youversion.com/) REST API (`GET /v1/bibles/{bible_id}/passages/{passage_id}`) + offline Berean Standard Bible (`bible_id: 3034`) passages
+- **Illustrations:** `react-native-svg` custom 6-stage Mustard Seed mascot
 
-### Tech stack
+## Getting Started
 
-**TBD.** One proposal is a cross-platform app with something like React Native and Expo, which would line up with SDKs YouVersion already offers. That choice is still open.
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-### Roadmap
+2. **Start the Expo development server:**
+   ```bash
+   npm run start
+   ```
+   - Press `i` to open in the iOS Simulator
+   - Press `a` to open in the Android Emulator
+   - Press `w` to open in the Web browser (`npm run web`)
 
-1. Choose a stack and add a real project skeleton.
-2. Build the prayer list: requests, notes, categories, and answered dates.
-3. Add an answered-prayers history.
-4. Add customizable reminders.
-5. Show encouraging verses from the YouVersion platform.
-6. Bring in the mustard-seed mascot, including its growth as prayers are answered.
+3. **Optional — Connect a Live YouVersion Platform App Key:**
+   - Register for an App Key at [developers.youversion.com](https://developers.youversion.com/).
+   - Either set `EXPO_PUBLIC_YVP_APP_KEY=your_key_here` in a `.env.local` file, or tap **YouVersion API** in the **Verses** tab inside the app to enter your key and preferred Bible version ID.
 
-## YouVersion
+## Project Structure
 
-Verses are planned to come from the [YouVersion Platform](https://platform.youversion.com/), which provides Bible APIs and SDKs for apps and websites. Developer documentation lives at [developers.youversion.com](https://developers.youversion.com/).
-
-Integration will follow YouVersion's terms, including how Scripture is licensed and displayed. Platform services are for non-commercial, ad-free experiences. App registration and the exact verses shown will be decided when that work starts.
-
-## Getting started
-
-Setup steps will land here once a project exists. There is nothing to install or run from this repository today.
-
-## Contributing
-
-Ideas, sketches, and pull requests are welcome. Because the app is still taking shape, open an issue before a large change so the direction stays clear.
+- `src/app/_layout.tsx` — Root tab navigation (`Prayers`, `Answered`, `Verses`, `Reminders`)
+- `src/app/index.tsx` — Active Prayer List, category filters, prayer notes journal, and Mustard Seed growth hero card
+- `src/app/answered.tsx` — Answered-prayers history timeline & interactive 6-stage mascot growth viewer
+- `src/app/verses.tsx` — Daily encouraging verse, themed Scripture library, bookmarks, and live YouVersion USFM passage lookup
+- `src/app/reminders.tsx` — Customizable daily gentle prayer nudges and test notifications
+- `src/components/mustard-mascot.tsx` — Custom SVG mustard-seed mascot across 6 growth stages
+- `src/context/mustard-context.tsx` — App state management and persistence synchronization
+- `src/services/storage.ts` — Local SQLite + AsyncStorage persistence layer
+- `src/services/youversion.ts` — YouVersion Platform REST API client (`api.youversion.com/v1`)
+- `src/services/notifications.ts` — Local notification scheduling via `expo-notifications`
 
 ## License
 
