@@ -75,11 +75,11 @@ export default function VersesScreen() {
   };
 
   const handleSaveApiConfig = async () => {
-    const parsedBibleId = Number.parseInt(bibleIdInput, 10) || 3034;
+    const parsedBibleId = Number.parseInt(bibleIdInput, 10) || 111;
     updateSettings({
       youVersionAppKey: apiKeyInput.trim(),
       preferredBibleId: parsedBibleId,
-      preferredBibleAbbrev: bibleAbbrevInput.trim() || 'BSB',
+      preferredBibleAbbrev: bibleAbbrevInput.trim() || 'NIV',
     });
 
     if (apiKeyInput.trim()) {
@@ -96,7 +96,7 @@ export default function VersesScreen() {
         setIsSyncing(false);
       }
     } else {
-      setSyncMessage('Using bundled offline Berean Standard Bible verses.');
+      setSyncMessage('Using bundled offline NIV verses.');
     }
   };
 
@@ -139,7 +139,7 @@ export default function VersesScreen() {
         showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.screenTitle}>Encouraging Verses</Text>
+            <Text style={styles.screenTitle}>Verses</Text>
             <Text style={styles.screenSubtitle}>
               Scripture for steady prayer, powered by YouVersion
             </Text>
@@ -158,8 +158,8 @@ export default function VersesScreen() {
             ]}>
             <Ionicons
               name={hasApiKey ? 'checkmark-circle' : 'key-outline'}
-              size={15}
-              color={hasApiKey ? COLORS.sproutDark : '#2A2419'}
+              size={14}
+              color={hasApiKey ? COLORS.sproutDark : COLORS.textSecondary}
             />
             <Text
               style={[
@@ -175,8 +175,8 @@ export default function VersesScreen() {
         <RevealView style={styles.featuredVerseCard}>
           <View style={styles.featuredTopRow}>
             <View style={styles.featuredBadge}>
-              <Ionicons name="sunny" size={14} color={COLORS.mustardDark} />
-              <Text style={styles.featuredBadgeText}>TODAY’S MUSTARD SEED VERSE</Text>
+              <Ionicons name="sunny" size={13} color={COLORS.mustardDark} />
+              <Text style={styles.featuredBadgeText}>Today’s Verse</Text>
             </View>
             <MotionPressable
               pop
@@ -188,7 +188,7 @@ export default function VersesScreen() {
               onPress={() => handleBookmark(dailyVerse.id, dailyVerse.isBookmarked)}>
               <Ionicons
                 name={dailyVerse.isBookmarked ? 'bookmark' : 'bookmark-outline'}
-                size={20}
+                size={19}
                 color={COLORS.mustardDark}
               />
             </MotionPressable>
@@ -197,12 +197,12 @@ export default function VersesScreen() {
           <Text style={styles.featuredText}>{dailyVerse.text}</Text>
           <View style={styles.featuredFooter}>
             <Text style={styles.featuredRef}>
-              {dailyVerse.reference} • {dailyVerse.versionAbbreviation}
+              {dailyVerse.reference} · {dailyVerse.versionAbbreviation}
             </Text>
             <Text style={styles.featuredSource}>
               {dailyVerse.source === 'youversion-api'
-                ? 'YouVersion Platform Live'
-                : 'YouVersion • BSB'}
+                ? 'YouVersion Live'
+                : 'YouVersion'}
             </Text>
           </View>
         </RevealView>
@@ -224,8 +224,8 @@ export default function VersesScreen() {
             ]}>
             <Ionicons
               name={onlyBookmarked ? 'bookmark' : 'bookmark-outline'}
-              size={13}
-              color={onlyBookmarked ? '#2A2419' : COLORS.textSecondary}
+              size={12}
+              color={onlyBookmarked ? COLORS.text : COLORS.textSecondary}
             />
             <Text
               style={[
@@ -276,7 +276,7 @@ export default function VersesScreen() {
                 hitSlop={8}>
                 <Ionicons
                   name={verse.isBookmarked ? 'bookmark' : 'bookmark-outline'}
-                  size={19}
+                  size={18}
                   color={
                     verse.isBookmarked ? COLORS.mustardDark : COLORS.textMuted
                   }
@@ -286,22 +286,19 @@ export default function VersesScreen() {
 
             <Text style={styles.verseCardBody}>{verse.text}</Text>
 
-            <View style={styles.verseCardBottom}>
-              <Text style={styles.verseCardRef}>
-                {verse.reference} ({verse.versionAbbreviation})
-              </Text>
-              <Text style={styles.verseUsfmTag}>USFM: {verse.usfm}</Text>
-            </View>
+            <Text style={styles.verseCardRef}>
+              {verse.reference} · {verse.versionAbbreviation}
+            </Text>
           </RevealView>
         ))}
 
         {/* Live YouVersion Passage Lookup Box */}
         <View style={styles.lookupBox}>
           <Text style={styles.lookupTitle}>
-            Look up any verse via YouVersion Platform
+            Passage Lookup
           </Text>
           <Text style={styles.lookupDesc}>
-            Enter a USFM reference (e.g. `MAT.17.20`, `JHN.15.7`, `PSA.23.1`) to fetch directly from `api.youversion.com/v1`.
+            Enter a USFM reference (e.g. MAT.17.20, JHN.15.7, PSA.23.1) to fetch directly from YouVersion Platform.
           </Text>
           <View style={styles.lookupInputRow}>
             <TextInput
@@ -319,7 +316,7 @@ export default function VersesScreen() {
               {isLookingUp ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={styles.lookupBtnText}>Fetch Verse</Text>
+                <Text style={styles.lookupBtnText}>Fetch</Text>
               )}
             </Pressable>
           </View>
@@ -332,7 +329,7 @@ export default function VersesScreen() {
                 {customLookupResult.content}
               </Text>
               <Text style={styles.lookupResultRef}>
-                {customLookupResult.reference} ({settings.preferredBibleAbbrev})
+                {customLookupResult.reference} · {settings.preferredBibleAbbrev}
               </Text>
             </View>
           )}
@@ -349,15 +346,19 @@ export default function VersesScreen() {
         onRequestClose={() => setShowApiModal(false)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>YouVersion Platform Setup</Text>
-              <Pressable onPress={() => setShowApiModal(false)}>
-                <Ionicons name="close" size={24} color={COLORS.textSecondary} />
+              <Text style={styles.modalTitle}>YouVersion Platform</Text>
+              <Pressable
+                onPress={() => setShowApiModal(false)}
+                style={styles.modalCloseBtn}
+                hitSlop={8}>
+                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
               </Pressable>
             </View>
 
             <Text style={styles.modalNote}>
-              Mustard ships with curated encouraging verses from the Berean Standard Bible (Bible ID `3034`) so it works offline immediately. Add your `X-YVP-App-Key` from developers.youversion.com to pull live passages in any licensed Bible version.
+              Mustard ships with curated verses from the New International Version (NIV, ID 111) for immediate offline use. Add your X-YVP-App-Key from developers.youversion.com to pull live passages in any licensed version.
             </Text>
 
             <Text style={styles.inputLabel}>YouVersion App Key (X-YVP-App-Key)</Text>
@@ -379,7 +380,7 @@ export default function VersesScreen() {
                   value={bibleIdInput}
                   onChangeText={setBibleIdInput}
                   keyboardType="number-pad"
-                  placeholder="3034"
+                  placeholder="111"
                 />
               </View>
               <View style={{ flex: 1 }}>
@@ -388,7 +389,7 @@ export default function VersesScreen() {
                   style={styles.textInput}
                   value={bibleAbbrevInput}
                   onChangeText={setBibleAbbrevInput}
-                  placeholder="BSB"
+                  placeholder="NIV"
                 />
               </View>
             </View>
@@ -402,7 +403,7 @@ export default function VersesScreen() {
               style={styles.saveApiBtn}
               disabled={isSyncing}>
               {isSyncing ? (
-                <ActivityIndicator size="small" color="#2A2419" />
+                <ActivityIndicator size="small" color={COLORS.text} />
               ) : (
                 <Text style={styles.saveApiBtnText}>Save & Sync Passages</Text>
               )}
@@ -423,22 +424,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 18,
-    paddingTop: 12,
-    paddingBottom: 38,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 42,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   screenTitle: {
     fontSize: 28,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.text,
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
   },
   screenSubtitle: {
     fontSize: 13,
@@ -449,54 +450,53 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: COLORS.mustardLight,
+    backgroundColor: COLORS.surfaceMuted,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#EAD08B',
-    marginTop: 4,
   },
   yvpConnectBtnActive: {
     backgroundColor: COLORS.sproutLight,
-    borderColor: '#B8DFB4',
   },
   yvpConnectBtnText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#2A2419',
+    fontWeight: '600',
+    color: COLORS.textSecondary,
   },
   featuredVerseCard: {
     backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 20,
-    padding: 18,
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1,
-    borderColor: '#F0D999',
-    marginBottom: 16,
+    borderColor: '#F2E2B6',
+    marginBottom: 18,
   },
   featuredTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   featuredBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
+    backgroundColor: COLORS.mustardLight,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 999,
   },
   featuredBadgeText: {
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.mustardDark,
-    letterSpacing: 0.6,
   },
   featuredText: {
     fontSize: 16,
     lineHeight: 24,
     color: COLORS.text,
-    fontWeight: '600',
-    marginBottom: 12,
+    fontWeight: '500',
+    marginBottom: 14,
   },
   featuredFooter: {
     flexDirection: 'row',
@@ -505,17 +505,17 @@ const styles = StyleSheet.create({
   },
   featuredRef: {
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.text,
   },
   featuredSource: {
     fontSize: 11,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
+    color: COLORS.textMuted,
+    fontWeight: '500',
   },
   filterRow: {
     gap: 8,
-    paddingBottom: 14,
+    paddingBottom: 16,
   },
   filterChip: {
     flexDirection: 'row',
@@ -524,17 +524,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
     paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.surfaceMuted,
   },
   filterChipActive: {
     backgroundColor: COLORS.text,
-    borderColor: COLORS.text,
   },
   filterChipBookmarkActive: {
     backgroundColor: COLORS.mustard,
-    borderColor: COLORS.mustardDark,
   },
   filterChipText: {
     fontSize: 12,
@@ -545,22 +541,26 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   filterChipBookmarkText: {
-    color: '#2A2419',
+    color: COLORS.text,
     fontWeight: '700',
   },
   verseCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     borderWidth: 1,
     borderColor: COLORS.border,
     marginBottom: 12,
+    shadowColor: COLORS.text,
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
   },
   verseCardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   themePill: {
     backgroundColor: COLORS.surfaceMuted,
@@ -570,49 +570,37 @@ const styles = StyleSheet.create({
   },
   themePillText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
     color: COLORS.textSecondary,
   },
   verseCardBody: {
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 14.5,
+    lineHeight: 22,
     color: COLORS.text,
-    marginBottom: 10,
-  },
-  verseCardBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceMuted,
-    paddingTop: 8,
+    marginBottom: 12,
   },
   verseCardRef: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: COLORS.text,
-  },
-  verseUsfmTag: {
-    fontSize: 11,
-    color: COLORS.textMuted,
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
   },
   lookupBox: {
     backgroundColor: COLORS.surface,
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginTop: 8,
+    marginTop: 6,
   },
   lookupTitle: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.text,
     marginBottom: 4,
   },
   lookupDesc: {
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 12.5,
+    lineHeight: 18,
     color: COLORS.textSecondary,
     marginBottom: 12,
   },
@@ -626,7 +614,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 13,
     paddingVertical: 10,
     fontSize: 13,
     color: COLORS.text,
@@ -634,13 +622,13 @@ const styles = StyleSheet.create({
   },
   lookupBtn: {
     backgroundColor: COLORS.text,
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     justifyContent: 'center',
     borderRadius: 12,
   },
   lookupBtnText: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '600',
     fontSize: 13,
   },
   lookupErrorText: {
@@ -651,31 +639,40 @@ const styles = StyleSheet.create({
   lookupResultCard: {
     marginTop: 12,
     backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    padding: 14,
   },
   lookupResultText: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 13.5,
+    lineHeight: 20,
     color: COLORS.text,
     marginBottom: 6,
   },
   lookupResultRef: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     color: COLORS.mustardDark,
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(42, 36, 25, 0.45)',
+    backgroundColor: 'rgba(35, 31, 24, 0.35)',
     justifyContent: 'flex-end',
   },
   modalSheet: {
     backgroundColor: COLORS.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: 34,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 22,
+    paddingTop: 12,
+    paddingBottom: 36,
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: COLORS.border,
+    alignSelf: 'center',
+    marginBottom: 14,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -684,19 +681,28 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 19,
+    fontWeight: '700',
     color: COLORS.text,
+    letterSpacing: -0.3,
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalNote: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 13,
+    lineHeight: 19,
     color: COLORS.textSecondary,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   inputLabel: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     color: COLORS.textSecondary,
     marginBottom: 6,
   },
@@ -704,12 +710,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 12,
-    paddingHorizontal: 13,
-    paddingVertical: 11,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14,
     color: COLORS.text,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   rowInputs: {
     flexDirection: 'row',
@@ -729,7 +735,7 @@ const styles = StyleSheet.create({
   },
   saveApiBtnText: {
     fontSize: 15,
-    fontWeight: '800',
-    color: '#2A2419',
+    fontWeight: '700',
+    color: COLORS.text,
   },
 });

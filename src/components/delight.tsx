@@ -108,7 +108,7 @@ export function MotionPressable({
       }}
       onPressIn={(event) => {
         if (typeof style === 'function') setPressed(true);
-        if (!disabled && !reduceMotion) springTo(0.96);
+        if (!disabled && !reduceMotion) springTo(0.97);
         onPressIn?.(event);
       }}
       onPressOut={(event) => {
@@ -127,7 +127,7 @@ export function MotionPressable({
         if (pop && !reduceMotion) {
           scale.stopAnimation();
           Animated.sequence([
-            Animated.timing(scale, { toValue: 1.1, duration: 110, useNativeDriver }),
+            Animated.timing(scale, { toValue: 1.08, duration: 110, useNativeDriver }),
             Animated.spring(scale, { toValue: 1, speed: 20, bounciness: 8, useNativeDriver }),
           ]).start();
         }
@@ -182,8 +182,8 @@ export function RevealView({ children, delay = 0, replayKey, style, ...props }: 
     ? originalTransform
     : [
         ...(originalTransform ?? []),
-        { translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) },
-        { scale: progress.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1] }) },
+        { translateY: progress.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) },
+        { scale: progress.interpolate({ inputRange: [0, 1], outputRange: [0.98, 1] }) },
       ];
   return (
     <Animated.View
@@ -264,7 +264,6 @@ export function CelebrationToast({ event }: { event: { id: number; message: stri
       ]}>
       <Text accessible={false} style={styles.toastIcon}>🌱</Text>
       <Text accessible={false} style={styles.toastText}>{event.message}</Text>
-      <Text accessible={false} style={styles.toastSparkle}>✦</Text>
     </Animated.View>
   );
 }
@@ -272,23 +271,21 @@ export function CelebrationToast({ event }: { event: { id: number; message: stri
 const styles = StyleSheet.create({
   toast: {
     position: 'absolute',
-    bottom: 20,
-    left: 18,
-    right: 18,
+    bottom: 24,
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    borderRadius: 16,
-    backgroundColor: COLORS.sproutDark,
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 999,
+    backgroundColor: COLORS.text,
     elevation: 4,
     shadowColor: COLORS.text,
-    shadowOpacity: 0.14,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
   },
-  toastIcon: { fontSize: 20 },
-  toastText: { flex: 1, color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
-  toastSparkle: { color: COLORS.mustardLight, fontSize: 17 },
+  toastIcon: { fontSize: 15 },
+  toastText: { color: '#FFFFFF', fontSize: 13, fontWeight: '600' },
 });

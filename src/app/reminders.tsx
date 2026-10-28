@@ -83,16 +83,16 @@ export default function RemindersScreen() {
         showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.screenTitle}>Gentle Reminders</Text>
+            <Text style={styles.screenTitle}>Reminders</Text>
             <Text style={styles.screenSubtitle}>
-              Customizable nudges through the day — meant to invite prayer rather than interrupt it.
+              Gentle nudges through the day to invite prayer
             </Text>
           </View>
           <MotionPressable
             feedback="light"
             onPress={() => setShowAddModal(true)}
             style={styles.addBtn}>
-            <Ionicons name="add" size={19} color="#2A2419" />
+            <Ionicons name="add" size={18} color={COLORS.text} />
             <Text style={styles.addBtnText}>Add Nudge</Text>
           </MotionPressable>
         </View>
@@ -152,7 +152,13 @@ export default function RemindersScreen() {
                     <Text style={styles.reminderTime}>
                       {formatReminderTime(rem.hour, rem.minute)}
                     </Text>
-                    <Text style={styles.reminderLabel}>{rem.label}</Text>
+                    <View style={styles.reminderMetaRow}>
+                      <Text style={styles.reminderLabel}>{rem.label}</Text>
+                      <Text style={styles.reminderDot}>·</Text>
+                      <Text style={styles.reminderFreq}>
+                        {rem.days.length === 7 ? 'Every day' : 'Weekdays'}
+                      </Text>
+                    </View>
                   </View>
                   <Switch
                     value={rem.enabled}
@@ -161,18 +167,15 @@ export default function RemindersScreen() {
                   />
                 </View>
 
-                <Text style={styles.reminderMessage}>“{rem.message}”</Text>
-
-                <View style={styles.reminderFooter}>
-                  <Text style={styles.reminderFreq}>
-                    {rem.days.length === 7 ? 'Every day' : 'Weekdays'}
-                  </Text>
+                <View style={styles.reminderBottomRow}>
+                  <Text style={styles.reminderMessage}>{rem.message}</Text>
                   <Pressable
                     onPress={() => deleteReminder(rem.id)}
+                    style={styles.deleteBtn}
                     hitSlop={8}>
                     <Ionicons
                       name="trash-outline"
-                      size={16}
+                      size={15}
                       color={COLORS.textMuted}
                     />
                   </Pressable>
@@ -192,10 +195,14 @@ export default function RemindersScreen() {
         onRequestClose={() => setShowAddModal(false)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>New Gentle Reminder</Text>
-              <Pressable onPress={() => setShowAddModal(false)}>
-                <Ionicons name="close" size={24} color={COLORS.textSecondary} />
+              <Pressable
+                onPress={() => setShowAddModal(false)}
+                style={styles.modalCloseBtn}
+                hitSlop={8}>
+                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
               </Pressable>
             </View>
 
@@ -207,7 +214,7 @@ export default function RemindersScreen() {
               placeholder="e.g., Afternoon Pause"
             />
 
-            <Text style={styles.inputLabel}>Choose a Time of Day</Text>
+            <Text style={styles.inputLabel}>Time of Day</Text>
             <View style={styles.presetGrid}>
               {PRESET_TIMES.map((preset) => {
                 const selected =
@@ -269,51 +276,58 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 18,
-    paddingTop: 12,
-    paddingBottom: 38,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 42,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 12,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   screenTitle: {
     fontSize: 28,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.text,
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
   },
   screenSubtitle: {
     fontSize: 13,
     lineHeight: 19,
     color: COLORS.textSecondary,
-    marginTop: 4,
+    marginTop: 2,
   },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     backgroundColor: COLORS.mustard,
-    paddingHorizontal: 13,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     borderRadius: 999,
-    marginTop: 4,
+    shadowColor: COLORS.mustardDark,
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
   },
   addBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#2A2419',
+    color: COLORS.text,
   },
   masterCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
     marginBottom: 16,
+    shadowColor: COLORS.text,
+    shadowOpacity: 0.03,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
   },
   masterRow: {
     flexDirection: 'row',
@@ -322,7 +336,7 @@ const styles = StyleSheet.create({
   },
   masterTitle: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.text,
   },
   masterSubtitle: {
@@ -332,9 +346,9 @@ const styles = StyleSheet.create({
   },
   testRow: {
     marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceMuted,
+    paddingTop: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.border,
   },
   testBtn: {
     flexDirection: 'row',
@@ -346,15 +360,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   testBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 12.5,
+    fontWeight: '600',
     color: COLORS.mustardDark,
   },
   testBannerBox: {
     marginTop: 10,
     backgroundColor: COLORS.sproutLight,
-    padding: 10,
-    borderRadius: 10,
+    padding: 12,
+    borderRadius: 12,
   },
   testBannerText: {
     fontSize: 12,
@@ -364,78 +378,112 @@ const styles = StyleSheet.create({
   },
   reminderCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     borderWidth: 1,
     borderColor: COLORS.border,
     marginBottom: 12,
+    shadowColor: COLORS.text,
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
   },
   reminderCardDimmed: {
-    opacity: 0.65,
+    opacity: 0.6,
   },
   reminderTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   reminderTime: {
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.text,
+    letterSpacing: -0.4,
+  },
+  reminderMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
   },
   reminderLabel: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 12.5,
+    fontWeight: '600',
     color: COLORS.mustardDark,
-    marginTop: 1,
   },
-  reminderMessage: {
-    fontSize: 13,
-    lineHeight: 19,
-    color: COLORS.textSecondary,
-    fontStyle: 'italic',
-    marginBottom: 10,
-  },
-  reminderFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceMuted,
-    paddingTop: 8,
+  reminderDot: {
+    fontSize: 12,
+    color: COLORS.textMuted,
   },
   reminderFreq: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
     color: COLORS.textMuted,
+  },
+  reminderBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.border,
+  },
+  reminderMessage: {
+    flex: 1,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: COLORS.textSecondary,
+  },
+  deleteBtn: {
+    padding: 4,
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(42, 36, 25, 0.45)',
+    backgroundColor: 'rgba(35, 31, 24, 0.35)',
     justifyContent: 'flex-end',
   },
   modalSheet: {
     backgroundColor: COLORS.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: 34,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 22,
+    paddingTop: 12,
+    paddingBottom: 36,
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: COLORS.border,
+    alignSelf: 'center',
+    marginBottom: 14,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 19,
+    fontWeight: '700',
     color: COLORS.text,
+    letterSpacing: -0.3,
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inputLabel: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     color: COLORS.textSecondary,
     marginBottom: 6,
   },
@@ -443,43 +491,42 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 12,
-    paddingHorizontal: 13,
-    paddingVertical: 11,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14,
     color: COLORS.text,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   textArea: {
-    minHeight: 74,
+    minHeight: 76,
     textAlignVertical: 'top',
   },
   presetGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   presetChip: {
     paddingHorizontal: 13,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 999,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
   presetChipActive: {
-    backgroundColor: COLORS.mustard,
-    borderColor: COLORS.mustardDark,
+    backgroundColor: COLORS.text,
+    borderColor: COLORS.text,
   },
   presetChipText: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '600',
     color: COLORS.textSecondary,
   },
   presetChipTextActive: {
-    color: '#2A2419',
-    fontWeight: '800',
+    color: '#FFFFFF',
   },
   saveModalBtn: {
     backgroundColor: COLORS.mustard,
@@ -490,7 +537,7 @@ const styles = StyleSheet.create({
   },
   saveModalBtnText: {
     fontSize: 15,
-    fontWeight: '800',
-    color: '#2A2419',
+    fontWeight: '700',
+    color: COLORS.text,
   },
 });

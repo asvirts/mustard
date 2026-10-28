@@ -63,10 +63,10 @@ export function PrayedButton({ count, onPress, large = false }: PrayedButtonProp
       const useNativeDriver = Platform.OS !== 'web';
       Animated.parallel([
         Animated.sequence([
-          Animated.spring(scale, { toValue: 1.12, speed: 35, bounciness: 8, useNativeDriver }),
-          Animated.spring(scale, { toValue: 1, speed: 20, bounciness: 9, useNativeDriver }),
+          Animated.spring(scale, { toValue: 1.08, speed: 35, bounciness: 7, useNativeDriver }),
+          Animated.spring(scale, { toValue: 1, speed: 22, bounciness: 8, useNativeDriver }),
         ]),
-        Animated.timing(celebration, { toValue: 1, duration: 900, useNativeDriver }),
+        Animated.timing(celebration, { toValue: 1, duration: 850, useNativeDriver }),
       ]).start();
     }
   };
@@ -79,15 +79,37 @@ export function PrayedButton({ count, onPress, large = false }: PrayedButtonProp
           accessibilityLabel={`Record a prayer. Prayed ${count} ${count === 1 ? 'time' : 'times'}.`}
           hitSlop={6}
           onPress={handlePress}
-          style={[styles.button, large && styles.largeButton]}>
+          style={[
+            styles.button,
+            large && styles.largeButton,
+            showConfirmation && styles.buttonConfirmed,
+          ]}>
           <Ionicons
             name={showConfirmation ? 'checkmark-circle' : large ? 'hand-left' : 'hand-left-outline'}
-            size={large ? 16 : 15}
-            color={showConfirmation ? COLORS.sproutDark : COLORS.text}
+            size={large ? 16 : 14}
+            color={showConfirmation ? COLORS.sproutDark : COLORS.mustardDark}
           />
-          <Text style={styles.buttonText}>
-            {showConfirmation ? 'Prayed!' : large ? 'Pray Now' : 'Prayed'} ({count})
+          <Text
+            style={[
+              styles.buttonText,
+              large && styles.largeButtonText,
+              showConfirmation && styles.buttonTextConfirmed,
+            ]}>
+            {showConfirmation ? 'Prayed' : large ? 'Pray Now' : 'Prayed'}
           </Text>
+          <View
+            style={[
+              styles.countBadge,
+              showConfirmation && styles.countBadgeConfirmed,
+            ]}>
+            <Text
+              style={[
+                styles.countText,
+                showConfirmation && styles.countTextConfirmed,
+              ]}>
+              {count}
+            </Text>
+          </View>
         </Pressable>
       </Animated.View>
       {!reduceMotion && (
@@ -102,7 +124,7 @@ export function PrayedButton({ count, onPress, large = false }: PrayedButtonProp
                 inputRange: [0, 0.15, 0.7, 1],
                 outputRange: [0, 1, 1, 0],
               }),
-              transform: [{ translateY: celebration.interpolate({ inputRange: [0, 1], outputRange: [0, -24] }) }],
+              transform: [{ translateY: celebration.interpolate({ inputRange: [0, 1], outputRange: [0, -22] }) }],
             },
           ]}>
           <Text style={styles.sparkle}>✦</Text>
@@ -125,22 +147,54 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: COLORS.mustardLight,
-    paddingHorizontal: 12,
+    gap: 6,
+    backgroundColor: COLORS.surfaceAlt,
+    paddingLeft: 12,
+    paddingRight: 8,
     paddingVertical: 6,
     borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#F3E3B8',
+  },
+  buttonConfirmed: {
+    backgroundColor: COLORS.sproutLight,
+    borderColor: '#CBE6C9',
   },
   largeButton: {
     justifyContent: 'center',
-    gap: 6,
+    gap: 7,
     paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
   },
   buttonText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     color: COLORS.text,
+  },
+  largeButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  buttonTextConfirmed: {
+    color: COLORS.sproutDark,
+  },
+  countBadge: {
+    backgroundColor: COLORS.mustardLight,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 999,
+  },
+  countBadgeConfirmed: {
+    backgroundColor: '#D6EDD4',
+  },
+  countText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.mustardDark,
+  },
+  countTextConfirmed: {
+    color: COLORS.sproutDark,
   },
   celebration: {
     position: 'absolute',
@@ -150,18 +204,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 5,
+    gap: 4,
   },
   sparkle: {
     color: COLORS.mustardDark,
-    fontSize: 12,
+    fontSize: 11,
   },
   greenSparkle: {
     color: COLORS.sprout,
   },
   plusOne: {
     color: COLORS.sproutDark,
-    fontSize: 13,
-    fontWeight: '800',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 import { MotionProvider } from '@/components/delight';
 import { COLORS } from '@/constants/mustard-data';
@@ -23,29 +23,31 @@ export default function RootLayout() {
         <Tabs
           screenOptions={{
             headerShown: false,
-            tabBarActiveTintColor: COLORS.mustardDark,
+            tabBarActiveTintColor: COLORS.text,
             tabBarInactiveTintColor: COLORS.textMuted,
             tabBarStyle: {
               backgroundColor: COLORS.surface,
               borderTopColor: COLORS.border,
-              borderTopWidth: 1,
-              height: Platform.OS === 'ios' ? 86 : 66,
-              paddingTop: 6,
+              borderTopWidth: StyleSheet.hairlineWidth,
+              height: Platform.OS === 'ios' ? 84 : 64,
+              paddingTop: 8,
               paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+              elevation: 0,
             },
             tabBarLabelStyle: {
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: '600',
+              letterSpacing: 0.1,
             },
           }}>
           <Tabs.Screen
             name="index"
             options={{
               title: 'Prayers',
-              tabBarIcon: ({ color, size }) => (
+              tabBarIcon: ({ color, focused }) => (
                 <Ionicons
-                  name="heart-outline"
-                  size={size}
+                  name={focused ? 'heart' : 'heart-outline'}
+                  size={21}
                   color={typeof color === 'string' ? color : COLORS.textMuted}
                 />
               ),
@@ -55,10 +57,10 @@ export default function RootLayout() {
             name="answered"
             options={{
               title: 'Answered',
-              tabBarIcon: ({ color, size }) => (
+              tabBarIcon: ({ color, focused }) => (
                 <Ionicons
-                  name="leaf-outline"
-                  size={size}
+                  name={focused ? 'leaf' : 'leaf-outline'}
+                  size={21}
                   color={typeof color === 'string' ? color : COLORS.textMuted}
                 />
               ),
@@ -68,10 +70,10 @@ export default function RootLayout() {
             name="verses"
             options={{
               title: 'Verses',
-              tabBarIcon: ({ color, size }) => (
+              tabBarIcon: ({ color, focused }) => (
                 <Ionicons
-                  name="book-outline"
-                  size={size}
+                  name={focused ? 'book' : 'book-outline'}
+                  size={21}
                   color={typeof color === 'string' ? color : COLORS.textMuted}
                 />
               ),
@@ -81,10 +83,10 @@ export default function RootLayout() {
             name="reminders"
             options={{
               title: 'Reminders',
-              tabBarIcon: ({ color, size }) => (
+              tabBarIcon: ({ color, focused }) => (
                 <Ionicons
-                  name="notifications-outline"
-                  size={size}
+                  name={focused ? 'notifications' : 'notifications-outline'}
+                  size={21}
                   color={typeof color === 'string' ? color : COLORS.textMuted}
                 />
               ),

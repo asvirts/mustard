@@ -137,7 +137,7 @@ export default function PrayersScreen() {
             feedback="light"
             style={styles.newPrayerButton}
             onPress={() => setShowAddModal(true)}>
-            <Ionicons name="add" size={20} color="#2A2419" />
+            <Ionicons name="add" size={18} color={COLORS.text} />
             <Text style={styles.newPrayerButtonText}>Add Prayer</Text>
           </MotionPressable>
         </View>
@@ -146,19 +146,41 @@ export default function PrayersScreen() {
         <View style={styles.heroCard}>
           <View style={styles.heroTopRow}>
             <RevealView replayKey={`${growthStage.stage}:${answeredPrayers.length}`}>
-              <MustardMascot stage={growthStage.stage} size={118} />
+              <MustardMascot stage={growthStage.stage} size={106} />
             </RevealView>
             <View style={styles.heroTextCol}>
-              <View style={styles.stageBadge}>
-                <Text style={styles.stageBadgeText}>
-                  STAGE {growthStage.stage} OF 6
-                </Text>
+              <View style={styles.stageBadgeRow}>
+                <View style={styles.stageBadge}>
+                  <Text style={styles.stageBadgeText}>
+                    Stage {growthStage.stage} of 6
+                  </Text>
+                </View>
+                <Text style={styles.stageSubtitle}>{growthStage.subtitle}</Text>
               </View>
               <Text style={styles.stageTitle}>{growthStage.name}</Text>
-              <Text style={styles.stageSubtitle}>{growthStage.subtitle}</Text>
               <Text style={styles.stageDesc}>{growthStage.description}</Text>
             </View>
           </View>
+
+          {growthStage.nextThreshold !== null && (
+            <View style={styles.progressSection}>
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${Math.max(12, Math.round(progressToNext * 100))}%` },
+                  ]}
+                />
+              </View>
+              <Text style={styles.progressCaption}>
+                {growthStage.nextThreshold - answeredPrayers.length} more answered{' '}
+                {growthStage.nextThreshold - answeredPrayers.length === 1
+                  ? 'prayer'
+                  : 'prayers'}{' '}
+                to reach Stage {growthStage.stage + 1}
+              </Text>
+            </View>
+          )}
 
           <View style={styles.heroStatsBar}>
             <RevealView style={styles.statPill} replayKey={activePrayers.length}>
@@ -178,40 +200,29 @@ export default function PrayersScreen() {
               <Text style={styles.statLabel}>Prayers Lifted</Text>
             </RevealView>
           </View>
-
-          {growthStage.nextThreshold !== null && (
-            <View style={styles.progressSection}>
-              <View style={styles.progressTrack}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${Math.max(10, Math.round(progressToNext * 100))}%` },
-                  ]}
-                />
-              </View>
-              <Text style={styles.progressCaption}>
-                {growthStage.nextThreshold - answeredPrayers.length} more answered{' '}
-                {growthStage.nextThreshold - answeredPrayers.length === 1
-                  ? 'prayer'
-                  : 'prayers'}{' '}
-                to sprout to Stage {growthStage.stage + 1}
-              </Text>
-            </View>
-          )}
         </View>
 
         {/* Daily Encouraging Verse Banner (YouVersion) */}
         <View style={styles.verseBanner}>
           <View style={styles.verseHeaderRow}>
             <View style={styles.verseTag}>
-              <Ionicons name="sparkles" size={13} color={COLORS.mustardDark} />
-              <Text style={styles.verseTagText}>DAILY ENCOURAGEMENT</Text>
+              <Ionicons name="sparkles" size={12} color={COLORS.mustardDark} />
+              <Text style={styles.verseTagText}>Daily Verse</Text>
             </View>
             <Text style={styles.verseVersionPill}>
-              {dailyVerse.reference} ({dailyVerse.versionAbbreviation})
+              {dailyVerse.reference} · {dailyVerse.versionAbbreviation}
             </Text>
           </View>
           <Text style={styles.verseBodyText}>{dailyVerse.text}</Text>
+        </View>
+
+        {/* Active Prayer List Section Header */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Prayers</Text>
+          <Text style={styles.sectionCount}>
+            {filteredPrayers.length}{' '}
+            {filteredPrayers.length === 1 ? 'request' : 'requests'}
+          </Text>
         </View>
 
         {/* Category Filter Chips */}
@@ -233,7 +244,7 @@ export default function PrayersScreen() {
                 styles.filterChipText,
                 selectedCategory === 'All' && styles.filterChipTextActive,
               ]}>
-              All ({activePrayers.length})
+              All {activePrayers.length > 0 ? `· ${activePrayers.length}` : ''}
             </Text>
           </MotionPressable>
           {CATEGORIES.map((cat) => {
@@ -252,21 +263,13 @@ export default function PrayersScreen() {
                     styles.filterChipText,
                     isSelected && styles.filterChipTextActive,
                   ]}>
-                  {cat.emoji} {cat.label} ({count})
+                  {cat.emoji} {cat.label}
+                  {count > 0 ? ` · ${count}` : ''}
                 </Text>
               </MotionPressable>
             );
           })}
         </ScrollView>
-
-        {/* Active Prayer List */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Prayer List</Text>
-          <Text style={styles.sectionCount}>
-            {filteredPrayers.length}{' '}
-            {filteredPrayers.length === 1 ? 'request' : 'requests'}
-          </Text>
-        </View>
 
         {filteredPrayers.length === 0 ? (
           <View style={styles.emptyCard}>
@@ -300,7 +303,7 @@ export default function PrayersScreen() {
                       </Text>
                     </View>
                     <Text style={styles.prayerTimestamp}>
-                      Added {formatRelativeDate(prayer.createdAt)}
+                      {formatRelativeDate(prayer.createdAt)}
                     </Text>
                   </View>
 
@@ -314,9 +317,9 @@ export default function PrayersScreen() {
                   {prayer.notes.length > 0 && (
                     <View style={styles.latestNoteBox}>
                       <Ionicons
-                        name="document-text-outline"
-                        size={14}
-                        color={COLORS.textSecondary}
+                        name="chatbubble-ellipses-outline"
+                        size={13}
+                        color={COLORS.textMuted}
                       />
                       <Text style={styles.latestNoteText} numberOfLines={1}>
                         {prayer.notes[0].text}
@@ -341,7 +344,7 @@ export default function PrayersScreen() {
                         style={styles.markAnsweredBtn}>
                         <Ionicons
                           name="checkmark-circle-outline"
-                          size={16}
+                          size={15}
                           color={COLORS.sproutDark}
                         />
                         <Text style={styles.markAnsweredBtnText}>Answered</Text>
@@ -363,10 +366,14 @@ export default function PrayersScreen() {
         onRequestClose={() => setShowAddModal(false)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Plant a New Prayer</Text>
-              <Pressable onPress={() => setShowAddModal(false)}>
-                <Ionicons name="close" size={24} color={COLORS.textSecondary} />
+              <Pressable
+                onPress={() => setShowAddModal(false)}
+                style={styles.modalCloseBtn}
+                hitSlop={8}>
+                <Ionicons name="close" size={20} color={COLORS.textSecondary} />
               </Pressable>
             </View>
 
@@ -441,12 +448,16 @@ export default function PrayersScreen() {
         onRequestClose={() => setSelectedPrayerId(null)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalSheet, { maxHeight: '88%' }]}>
+            <View style={styles.modalHandle} />
             {selectedPrayer && (
               <ScrollView showsVerticalScrollIndicator={false}>
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Prayer Details</Text>
-                  <Pressable onPress={() => setSelectedPrayerId(null)}>
-                    <Ionicons name="close" size={24} color={COLORS.textSecondary} />
+                  <Pressable
+                    onPress={() => setSelectedPrayerId(null)}
+                    style={styles.modalCloseBtn}
+                    hitSlop={8}>
+                    <Ionicons name="close" size={20} color={COLORS.textSecondary} />
                   </Pressable>
                 </View>
 
@@ -459,10 +470,12 @@ export default function PrayersScreen() {
 
                 <View style={styles.detailMetaRow}>
                   <Text style={styles.detailMetaText}>
-                    Category: {selectedPrayer.category}
+                    {selectedPrayer.category}
                   </Text>
+                  <Text style={styles.detailMetaDot}>·</Text>
                   <Text style={styles.detailMetaText}>
-                    Prayed {selectedPrayer.prayedCount} times
+                    Prayed {selectedPrayer.prayedCount}{' '}
+                    {selectedPrayer.prayedCount === 1 ? 'time' : 'times'}
                   </Text>
                 </View>
 
@@ -481,7 +494,7 @@ export default function PrayersScreen() {
                       placeholderTextColor={COLORS.textMuted}
                     />
                     <Text style={styles.inputLabel}>
-                      How did God answer this prayer?
+                      How was this prayer answered?
                     </Text>
                     <TextInput
                       style={[styles.textInput, styles.textArea]}
@@ -520,7 +533,7 @@ export default function PrayersScreen() {
                       style={styles.markAnsweredBtnLarge}>
                       <Ionicons
                         name="checkmark-circle"
-                        size={17}
+                        size={16}
                         color="#FFFFFF"
                       />
                       <Text style={styles.markAnsweredBtnLargeText}>
@@ -533,7 +546,7 @@ export default function PrayersScreen() {
                 {/* Journal Notes Section */}
                 <View style={styles.notesSection}>
                   <Text style={styles.notesHeading}>
-                    Prayer Notes & Updates ({selectedPrayer.notes.length})
+                    Journal Notes ({selectedPrayer.notes.length})
                   </Text>
                   <View style={styles.addNoteRow}>
                     <TextInput
@@ -548,7 +561,10 @@ export default function PrayersScreen() {
                       pop
                       disabled={!noteInput.trim()}
                       onPress={handleAddNote}
-                      style={styles.addNoteBtn}>
+                      style={[
+                        styles.addNoteBtn,
+                        !noteInput.trim() && { opacity: 0.45 },
+                      ]}>
                       <Text style={styles.addNoteBtnText}>Add</Text>
                     </MotionPressable>
                   </View>
@@ -569,7 +585,7 @@ export default function PrayersScreen() {
                     setSelectedPrayerId(null);
                   }}
                   style={styles.deletePrayerBtn}>
-                  <Ionicons name="trash-outline" size={16} color={COLORS.danger} />
+                  <Ionicons name="trash-outline" size={15} color={COLORS.danger} />
                   <Text style={styles.deletePrayerText}>Remove Prayer Request</Text>
                 </Pressable>
               </ScrollView>
@@ -591,21 +607,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 18,
-    paddingTop: 12,
-    paddingBottom: 38,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 42,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   appTitle: {
     fontSize: 28,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.text,
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
   },
   appSubtitle: {
     fontSize: 13,
@@ -615,96 +631,81 @@ const styles = StyleSheet.create({
   newPrayerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: COLORS.mustard,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 9,
     borderRadius: 999,
+    shadowColor: COLORS.mustardDark,
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
   },
   newPrayerButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#2A2419',
+    color: COLORS.text,
   },
   heroCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
     marginBottom: 14,
+    shadowColor: COLORS.text,
+    shadowOpacity: 0.03,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
   },
   heroTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 16,
   },
   heroTextCol: {
     flex: 1,
   },
+  stageBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+    flexWrap: 'wrap',
+  },
   stageBadge: {
-    alignSelf: 'flex-start',
     backgroundColor: COLORS.mustardLight,
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
     paddingVertical: 3,
     borderRadius: 999,
-    marginBottom: 6,
   },
   stageBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontWeight: '700',
     color: COLORS.mustardDark,
-    letterSpacing: 0.6,
   },
   stageTitle: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.text,
+    letterSpacing: -0.3,
+    marginBottom: 4,
   },
   stageSubtitle: {
     fontSize: 12,
     fontWeight: '600',
     color: COLORS.sprout,
-    marginTop: 1,
-    marginBottom: 5,
   },
   stageDesc: {
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 13,
+    lineHeight: 18,
     color: COLORS.textSecondary,
-  },
-  heroStatsBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 14,
-    paddingVertical: 10,
-    marginTop: 14,
-  },
-  statPill: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: COLORS.border,
-  },
-  statValue: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: COLORS.text,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    marginTop: 2,
   },
   progressSection: {
-    marginTop: 12,
+    marginTop: 16,
   },
   progressTrack: {
-    height: 7,
+    height: 5,
     backgroundColor: COLORS.surfaceMuted,
     borderRadius: 999,
     overflow: 'hidden',
@@ -716,61 +717,100 @@ const styles = StyleSheet.create({
   },
   progressCaption: {
     fontSize: 11,
-    color: COLORS.textSecondary,
-    marginTop: 5,
-    textAlign: 'center',
+    color: COLORS.textMuted,
+    marginTop: 6,
+  },
+  heroStatsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 16,
+    marginTop: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.border,
+  },
+  statPill: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statDivider: {
+    width: StyleSheet.hairlineWidth,
+    height: 22,
+    backgroundColor: COLORS.border,
+  },
+  statValue: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 2,
+    fontWeight: '500',
   },
   verseBanner: {
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 16,
-    padding: 14,
+    backgroundColor: COLORS.surface,
+    borderRadius: 20,
+    padding: 16,
     borderWidth: 1,
-    borderColor: '#F3DFAC',
-    marginBottom: 16,
+    borderColor: COLORS.border,
+    marginBottom: 22,
   },
   verseHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   verseTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   verseTagText: {
-    fontSize: 10,
-    fontWeight: '800',
+    fontSize: 11,
+    fontWeight: '700',
     color: COLORS.mustardDark,
-    letterSpacing: 0.6,
   },
   verseVersionPill: {
     fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.textSecondary,
+    fontWeight: '600',
+    color: COLORS.textMuted,
   },
   verseBodyText: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 13.5,
+    lineHeight: 20,
+    color: COLORS.textSecondary,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
     color: COLORS.text,
-    fontStyle: 'italic',
+    letterSpacing: -0.3,
+  },
+  sectionCount: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    fontWeight: '500',
   },
   filterChipsRow: {
     gap: 8,
-    paddingBottom: 14,
+    paddingBottom: 16,
   },
   filterChip: {
     paddingHorizontal: 13,
     paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    backgroundColor: COLORS.surfaceMuted,
   },
   filterChipActive: {
     backgroundColor: COLORS.text,
-    borderColor: COLORS.text,
   },
   filterChipText: {
     fontSize: 12,
@@ -780,37 +820,21 @@ const styles = StyleSheet.create({
   filterChipTextActive: {
     color: '#FFFFFF',
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.text,
-  },
-  sectionCount: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    fontWeight: '600',
-  },
   emptyCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: 18,
-    padding: 28,
+    borderRadius: 22,
+    padding: 32,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
   },
   emptyEmoji: {
-    fontSize: 32,
-    marginBottom: 8,
+    fontSize: 30,
+    marginBottom: 10,
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     color: COLORS.text,
     marginBottom: 4,
   },
@@ -822,17 +846,21 @@ const styles = StyleSheet.create({
   },
   prayerCard: {
     backgroundColor: COLORS.surface,
-    borderRadius: 18,
-    padding: 15,
+    borderRadius: 20,
+    padding: 18,
     borderWidth: 1,
     borderColor: COLORS.border,
     marginBottom: 12,
+    shadowColor: COLORS.text,
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
   },
   prayerCardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   categoryBadge: {
     paddingHorizontal: 10,
@@ -841,7 +869,7 @@ const styles = StyleSheet.create({
   },
   categoryBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   prayerTimestamp: {
     fontSize: 11,
@@ -849,12 +877,13 @@ const styles = StyleSheet.create({
   },
   prayerTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     color: COLORS.text,
     marginBottom: 4,
+    letterSpacing: -0.2,
   },
   prayerDetails: {
-    fontSize: 13,
+    fontSize: 13.5,
     lineHeight: 19,
     color: COLORS.textSecondary,
     marginBottom: 8,
@@ -863,9 +892,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: COLORS.surfaceMuted,
+    backgroundColor: COLORS.background,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 7,
     borderRadius: 10,
     marginBottom: 10,
   },
@@ -878,10 +907,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 6,
     paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceMuted,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.border,
   },
   cardRightActions: {
     flexDirection: 'row',
@@ -893,41 +922,59 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     backgroundColor: COLORS.sproutLight,
-    paddingHorizontal: 12,
+    paddingHorizontal: 11,
     paddingVertical: 6,
     borderRadius: 999,
   },
   markAnsweredBtnText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     color: COLORS.sproutDark,
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(42, 36, 25, 0.45)',
+    backgroundColor: 'rgba(35, 31, 24, 0.35)',
     justifyContent: 'flex-end',
   },
   modalSheet: {
     backgroundColor: COLORS.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: 34,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 22,
+    paddingTop: 12,
+    paddingBottom: 36,
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: COLORS.border,
+    alignSelf: 'center',
+    marginBottom: 14,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 19,
+    fontWeight: '700',
     color: COLORS.text,
+    letterSpacing: -0.3,
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inputLabel: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     color: COLORS.textSecondary,
     marginBottom: 6,
   },
@@ -935,23 +982,23 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 12,
-    paddingHorizontal: 13,
-    paddingVertical: 11,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14,
     color: COLORS.text,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   textArea: {
-    minHeight: 82,
+    minHeight: 84,
     textAlignVertical: 'top',
   },
   modalCategoryRow: {
     gap: 8,
-    paddingBottom: 14,
+    paddingBottom: 16,
   },
   modalCategoryChip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 13,
     paddingVertical: 8,
     borderRadius: 999,
     backgroundColor: COLORS.surface,
@@ -959,8 +1006,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   modalCategoryChipActive: {
-    backgroundColor: COLORS.mustard,
-    borderColor: COLORS.mustardDark,
+    backgroundColor: COLORS.text,
+    borderColor: COLORS.text,
   },
   modalCategoryChipText: {
     fontSize: 12,
@@ -968,8 +1015,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   modalCategoryChipTextActive: {
-    color: '#2A2419',
-    fontWeight: '700',
+    color: '#FFFFFF',
   },
   primaryModalBtn: {
     backgroundColor: COLORS.mustard,
@@ -979,39 +1025,45 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   primaryModalBtnDisabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
   primaryModalBtnText: {
     fontSize: 15,
-    fontWeight: '800',
-    color: '#2A2419',
+    fontWeight: '700',
+    color: COLORS.text,
   },
   detailPrayerTitle: {
     fontSize: 19,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.text,
     marginBottom: 6,
+    letterSpacing: -0.3,
   },
   detailPrayerBody: {
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
     color: COLORS.textSecondary,
     marginBottom: 12,
   },
   detailMetaRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 14,
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 16,
   },
   detailMetaText: {
     fontSize: 12,
     color: COLORS.textMuted,
-    fontWeight: '600',
+    fontWeight: '500',
+  },
+  detailMetaDot: {
+    fontSize: 12,
+    color: COLORS.textMuted,
   },
   detailQuickActions: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 18,
+    marginBottom: 20,
   },
   markAnsweredBtnLarge: {
     flex: 1,
@@ -1021,26 +1073,24 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: COLORS.sprout,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 14,
   },
   markAnsweredBtnLargeText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#FFFFFF',
   },
   answerFormCard: {
     backgroundColor: COLORS.sproutLight,
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 18,
+    padding: 16,
     marginBottom: 18,
-    borderWidth: 1,
-    borderColor: '#C5E3C2',
   },
   answerFormHeading: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.sproutDark,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   answerFormActions: {
     flexDirection: 'row',
@@ -1056,7 +1106,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
     color: COLORS.textSecondary,
   },
   confirmAnswerBtn: {
@@ -1068,18 +1118,18 @@ const styles = StyleSheet.create({
   },
   confirmAnswerBtnText: {
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#FFFFFF',
   },
   notesSection: {
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: COLORS.border,
-    paddingTop: 14,
+    paddingTop: 16,
     marginBottom: 18,
   },
   notesHeading: {
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.text,
     marginBottom: 10,
   },
@@ -1092,25 +1142,25 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.text,
     paddingHorizontal: 16,
     justifyContent: 'center',
-    borderRadius: 12,
+    borderRadius: 14,
   },
   addNoteBtnText: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '600',
     fontSize: 13,
   },
   noteItem: {
     backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    padding: 13,
     borderWidth: 1,
     borderColor: COLORS.border,
     marginBottom: 8,
   },
   noteItemText: {
-    fontSize: 13,
+    fontSize: 13.5,
     color: COLORS.text,
-    lineHeight: 18,
+    lineHeight: 19,
   },
   noteItemDate: {
     fontSize: 11,

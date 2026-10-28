@@ -14,8 +14,8 @@ const STORAGE_KEYS = {
 
 export const DEFAULT_SETTINGS: MustardSettings = {
   youVersionAppKey: '',
-  preferredBibleId: 3034, // Berean Standard Bible
-  preferredBibleAbbrev: 'BSB',
+  preferredBibleId: 111, // New International Version (NIV)
+  preferredBibleAbbrev: 'NIV',
   notificationsEnabled: true,
   dailyPrayerGoal: 3,
 };
@@ -81,18 +81,33 @@ export async function loadInitialData(): Promise<{
     };
   }
 
-  const [prayers, reminders, bookmarkedVerseIds, settings] = await Promise.all([
+  const [prayers, reminders, bookmarkedVerseIds, savedSettings] = await Promise.all([
     readJson<PrayerRequest[]>(STORAGE_KEYS.PRAYERS, INITIAL_PRAYERS),
     readJson<ReminderItem[]>(STORAGE_KEYS.REMINDERS, INITIAL_REMINDERS),
     readJson<string[]>(STORAGE_KEYS.BOOKMARKS, ['mat-17-20']),
     readJson<MustardSettings>(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS),
   ]);
 
+  const mergedSettings: MustardSettings = {
+    ...DEFAULT_SETTINGS,
+    ...savedSettings,
+  };
+
+  // Migrate previous default BSB (3034) settings to NIV (111)
+  if (
+    mergedSettings.preferredBibleId === 3034 &&
+    mergedSettings.preferredBibleAbbrev === 'BSB'
+  ) {
+    mergedSettings.preferredBibleId = 111;
+    mergedSettings.preferredBibleAbbrev = 'NIV';
+    await writeJson(STORAGE_KEYS.SETTINGS, mergedSettings);
+  }
+
   return {
     prayers,
     reminders,
     bookmarkedVerseIds,
-    settings: { ...DEFAULT_SETTINGS, ...settings },
+    settings: mergedSettings,
   };
 }
 

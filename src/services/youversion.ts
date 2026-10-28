@@ -62,8 +62,8 @@ export async function fetchYouVersionPassage(params: {
 export async function hydrateVerseFromYouVersion(
   verse: EncouragingVerse,
   appKey?: string,
-  bibleId = 3034,
-  versionAbbreviation = 'BSB'
+  bibleId = 111,
+  versionAbbreviation = 'NIV'
 ): Promise<EncouragingVerse> {
   const effectiveKey = appKey?.trim() || process.env.EXPO_PUBLIC_YVP_APP_KEY || '';
   if (!effectiveKey) {
