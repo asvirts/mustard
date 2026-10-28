@@ -79,12 +79,12 @@ export async function syncScheduledReminders(
 export async function sendTestGentleNudge(message?: string): Promise<boolean> {
   const body =
     message ||
-    'Pause for a quiet breath. Lift up one person on your Mustard prayer list right now.';
+    'Pause for a quiet breath. Lift up one person on your Pip prayer list right now.';
 
   if (Platform.OS === 'web') {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (window.Notification.permission === 'granted') {
-        new window.Notification('🌱 Mustard Prayer Nudge', { body });
+        new window.Notification('🌱 Pip Prayer Nudge', { body });
         return true;
       }
     }
@@ -99,7 +99,7 @@ export async function sendTestGentleNudge(message?: string): Promise<boolean> {
     }
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: '🌱 Mustard Prayer Nudge',
+        title: '🌱 Pip Prayer Nudge',
         body,
         sound: true,
       },

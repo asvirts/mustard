@@ -1,18 +1,18 @@
-# Mustard
+# Pip
 
 A friendly prayer companion that keeps track of what you're praying for, gently reminds you to pray throughout the day, and encourages you with verses from YouVersion.
 
 ## About
 
-Mustard is a mobile app idea by [Andrew Virts](https://github.com/asvirts), a product manager at YouVersion. It is a small, steady place to keep the people and needs you are praying for, with gentle reminders through the day and Scripture nearby when you need a nudge to keep going.
+Pip is a mobile app idea by [Andrew Virts](https://github.com/asvirts), a product manager at YouVersion. It is a small, steady place to keep the people and needs you are praying for, with gentle reminders through the day and Scripture nearby when you need a nudge to keep going.
 
-The brand is playful and warm: a little yellow mustard-seed mascot who can sprout and grow as prayers are answered.
+The brand is playful and warm: a little yellow mustard-seed mascot named Pip who can sprout and grow as prayers are answered.
 
 This is a personal project. It is not an official YouVersion app.
 
 ## Why the name
 
-The name comes from Matthew 17:20. Jesus tells his friends that faith as small as a mustard seed is enough. A mustard seed is tiny, ordinary, and full of life — a good picture for prayers that start small and are worth tending.
+A *pip* is a tiny seed — and the name of the app's little yellow mustard-seed mascot. The inspiration comes from Matthew 17:20, where Jesus tells his friends that faith as small as a mustard seed is enough. A tiny seed is ordinary and full of life — a good picture for prayers that start small and are worth tending.
 
 ## Features
 

@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "Mustard",
-    "slug": "mustard",
+    "name": "Pip",
+    "slug": "pip",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mustard",
+    "scheme": "pip",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.asvirts.mustard"
+      "bundleIdentifier": "com.asvirts.pip"
     },
     "android": {
-      "package": "com.asvirts.mustard",
+      "package": "com.asvirts.pip",
       "adaptiveIcon": {
         "backgroundColor": "#FFFBF2",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

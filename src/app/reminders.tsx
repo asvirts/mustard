@@ -70,7 +70,7 @@ export default function RemindersScreen() {
     setTestBanner(
       sentNative
         ? '🌱 Gentle nudge sent! Check your device notifications.'
-        : '🌱 Gentle nudge preview: “Pause for a quiet breath. Lift up one person on your Mustard prayer list right now.”'
+        : '🌱 Gentle nudge preview: “Pause for a quiet breath. Lift up one person on your Pip prayer list right now.”'
     );
     setTestBannerVersion((version) => version + 1);
   };

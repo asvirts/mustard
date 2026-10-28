@@ -358,7 +358,7 @@ export default function VersesScreen() {
             </View>
 
             <Text style={styles.modalNote}>
-              Mustard ships with curated verses from the New International Version (NIV, ID 111) for immediate offline use. Add your X-YVP-App-Key from developers.youversion.com to pull live passages in any licensed version.
+              Pip ships with curated verses from the New International Version (NIV, ID 111) for immediate offline use. Add your X-YVP-App-Key from developers.youversion.com to pull live passages in any licensed version.
             </Text>
 
             <Text style={styles.inputLabel}>YouVersion App Key (X-YVP-App-Key)</Text>

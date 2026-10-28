@@ -130,7 +130,7 @@ export default function PrayersScreen() {
         {/* Header Bar */}
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.appTitle}>Mustard</Text>
+            <Text style={styles.appTitle}>Pip</Text>
             <Text style={styles.appSubtitle}>Small seeds, steady prayer</Text>
           </View>
           <MotionPressable
