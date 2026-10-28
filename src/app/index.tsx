@@ -12,6 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MustardMascot } from '@/components/mustard-mascot';
+import { PrayedButton } from '@/components/prayed-button';
+import { CelebrationToast, MotionPressable, RevealView, useReducedMotion } from '@/components/delight';
 import { CATEGORIES, COLORS } from '@/constants/mustard-data';
 import { useMustard } from '@/context/mustard-context';
 import { PrayerCategory, PrayerRequest } from '@/types/mustard';
@@ -43,6 +45,12 @@ export default function PrayersScreen() {
   } = useMustard();
 
   const [selectedCategory, setSelectedCategory] = useState<PrayerCategory | 'All'>('All');
+  const reduceMotion = useReducedMotion();
+  const [celebration, setCelebration] = useState<{ id: number; message: string } | null>(null);
+
+  const celebrate = (message: string) => {
+    setCelebration((previous) => ({ id: (previous?.id ?? 0) + 1, message }));
+  };
 
   // New Prayer modal state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -80,6 +88,7 @@ export default function PrayersScreen() {
     setNewDetails('');
     setNewCategory('Family');
     setShowAddModal(false);
+    celebrate('A little prayer, planted in hope.');
   };
 
   const handleAddNote = () => {
@@ -101,6 +110,7 @@ export default function PrayersScreen() {
     setAnsweredReflectionInput('');
     setShowAnswerForm(false);
     setSelectedPrayerId(null);
+    celebrate('An answered prayer. A little more growth.');
   };
 
   const progressToNext = useMemo(() => {
@@ -123,18 +133,21 @@ export default function PrayersScreen() {
             <Text style={styles.appTitle}>Mustard</Text>
             <Text style={styles.appSubtitle}>Small seeds, steady prayer</Text>
           </View>
-          <Pressable
+          <MotionPressable
+            feedback="light"
             style={styles.newPrayerButton}
             onPress={() => setShowAddModal(true)}>
             <Ionicons name="add" size={20} color="#2A2419" />
             <Text style={styles.newPrayerButtonText}>Add Prayer</Text>
-          </Pressable>
+          </MotionPressable>
         </View>
 
         {/* Mustard Seed Mascot & Growth Hero Card */}
         <View style={styles.heroCard}>
           <View style={styles.heroTopRow}>
-            <MustardMascot stage={growthStage.stage} size={118} />
+            <RevealView replayKey={`${growthStage.stage}:${answeredPrayers.length}`}>
+              <MustardMascot stage={growthStage.stage} size={118} />
+            </RevealView>
             <View style={styles.heroTextCol}>
               <View style={styles.stageBadge}>
                 <Text style={styles.stageBadgeText}>
@@ -148,22 +161,22 @@ export default function PrayersScreen() {
           </View>
 
           <View style={styles.heroStatsBar}>
-            <View style={styles.statPill}>
+            <RevealView style={styles.statPill} replayKey={activePrayers.length}>
               <Text style={styles.statValue}>{activePrayers.length}</Text>
               <Text style={styles.statLabel}>Tending</Text>
-            </View>
+            </RevealView>
             <View style={styles.statDivider} />
-            <View style={styles.statPill}>
+            <RevealView style={styles.statPill} replayKey={answeredPrayers.length}>
               <Text style={[styles.statValue, { color: COLORS.sprout }]}>
                 {answeredPrayers.length}
               </Text>
               <Text style={styles.statLabel}>Answered</Text>
-            </View>
+            </RevealView>
             <View style={styles.statDivider} />
-            <View style={styles.statPill}>
+            <RevealView style={styles.statPill} replayKey={totalPrayedMoments}>
               <Text style={styles.statValue}>{totalPrayedMoments}</Text>
               <Text style={styles.statLabel}>Prayers Lifted</Text>
-            </View>
+            </RevealView>
           </View>
 
           {growthStage.nextThreshold !== null && (
@@ -206,7 +219,10 @@ export default function PrayersScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterChipsRow}>
-          <Pressable
+          <MotionPressable
+            feedback="light"
+            accessibilityRole="button"
+            accessibilityState={{ selected: selectedCategory === 'All' }}
             onPress={() => setSelectedCategory('All')}
             style={[
               styles.filterChip,
@@ -219,12 +235,15 @@ export default function PrayersScreen() {
               ]}>
               All ({activePrayers.length})
             </Text>
-          </Pressable>
+          </MotionPressable>
           {CATEGORIES.map((cat) => {
             const count = activePrayers.filter((p) => p.category === cat.id).length;
             const isSelected = selectedCategory === cat.id;
             return (
-              <Pressable
+              <MotionPressable
+                feedback="light"
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
                 key={cat.id}
                 onPress={() => setSelectedCategory(cat.id)}
                 style={[styles.filterChip, isSelected && styles.filterChipActive]}>
@@ -235,7 +254,7 @@ export default function PrayersScreen() {
                   ]}>
                   {cat.emoji} {cat.label} ({count})
                 </Text>
-              </Pressable>
+              </MotionPressable>
             );
           })}
         </ScrollView>
@@ -258,85 +277,79 @@ export default function PrayersScreen() {
             </Text>
           </View>
         ) : (
-          filteredPrayers.map((prayer) => {
+          filteredPrayers.map((prayer, index) => {
             const catMeta =
               CATEGORIES.find((c) => c.id === prayer.category) || CATEGORIES[0];
             return (
-              <Pressable
-                key={prayer.id}
-                onPress={() => {
-                  setSelectedPrayerId(prayer.id);
-                  setShowAnswerForm(false);
-                  setAnsweredDateInput(new Date().toISOString().slice(0, 10));
-                }}
-                style={styles.prayerCard}>
-                <View style={styles.prayerCardTop}>
-                  <View
-                    style={[
-                      styles.categoryBadge,
-                      { backgroundColor: catMeta.bg },
-                    ]}>
-                    <Text style={[styles.categoryBadgeText, { color: catMeta.color }]}>
-                      {catMeta.emoji} {catMeta.label}
+              <RevealView key={prayer.id} delay={Math.min(index, 4) * 40}>
+                <Pressable
+                  onPress={() => {
+                    setSelectedPrayerId(prayer.id);
+                    setShowAnswerForm(false);
+                    setAnsweredDateInput(new Date().toISOString().slice(0, 10));
+                  }}
+                  style={styles.prayerCard}>
+                  <View style={styles.prayerCardTop}>
+                    <View
+                      style={[
+                        styles.categoryBadge,
+                        { backgroundColor: catMeta.bg },
+                      ]}>
+                      <Text style={[styles.categoryBadgeText, { color: catMeta.color }]}>
+                        {catMeta.emoji} {catMeta.label}
+                      </Text>
+                    </View>
+                    <Text style={styles.prayerTimestamp}>
+                      Added {formatRelativeDate(prayer.createdAt)}
                     </Text>
                   </View>
-                  <Text style={styles.prayerTimestamp}>
-                    Added {formatRelativeDate(prayer.createdAt)}
-                  </Text>
-                </View>
 
-                <Text style={styles.prayerTitle}>{prayer.title}</Text>
-                {Boolean(prayer.details) && (
-                  <Text style={styles.prayerDetails} numberOfLines={2}>
-                    {prayer.details}
-                  </Text>
-                )}
-
-                {prayer.notes.length > 0 && (
-                  <View style={styles.latestNoteBox}>
-                    <Ionicons
-                      name="document-text-outline"
-                      size={14}
-                      color={COLORS.textSecondary}
-                    />
-                    <Text style={styles.latestNoteText} numberOfLines={1}>
-                      {prayer.notes[0].text}
+                  <Text style={styles.prayerTitle}>{prayer.title}</Text>
+                  {Boolean(prayer.details) && (
+                    <Text style={styles.prayerDetails} numberOfLines={2}>
+                      {prayer.details}
                     </Text>
-                  </View>
-                )}
+                  )}
 
-                <View style={styles.prayerCardFooter}>
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      recordPrayedNow(prayer.id);
-                    }}
-                    style={styles.prayNowBtn}>
-                    <Ionicons name="hand-left-outline" size={15} color="#2A2419" />
-                    <Text style={styles.prayNowBtnText}>
-                      Prayed ({prayer.prayedCount})
-                    </Text>
-                  </Pressable>
-
-                  <View style={styles.cardRightActions}>
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        setSelectedPrayerId(prayer.id);
-                        setShowAnswerForm(true);
-                        setAnsweredDateInput(new Date().toISOString().slice(0, 10));
-                      }}
-                      style={styles.markAnsweredBtn}>
+                  {prayer.notes.length > 0 && (
+                    <View style={styles.latestNoteBox}>
                       <Ionicons
-                        name="checkmark-circle-outline"
-                        size={16}
-                        color={COLORS.sproutDark}
+                        name="document-text-outline"
+                        size={14}
+                        color={COLORS.textSecondary}
                       />
-                      <Text style={styles.markAnsweredBtnText}>Answered</Text>
-                    </Pressable>
+                      <Text style={styles.latestNoteText} numberOfLines={1}>
+                        {prayer.notes[0].text}
+                      </Text>
+                    </View>
+                  )}
+
+                  <View style={styles.prayerCardFooter}>
+                    <PrayedButton
+                      count={prayer.prayedCount}
+                      onPress={() => recordPrayedNow(prayer.id)}
+                    />
+
+                    <View style={styles.cardRightActions}>
+                      <Pressable
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          setSelectedPrayerId(prayer.id);
+                          setShowAnswerForm(true);
+                          setAnsweredDateInput(new Date().toISOString().slice(0, 10));
+                        }}
+                        style={styles.markAnsweredBtn}>
+                        <Ionicons
+                          name="checkmark-circle-outline"
+                          size={16}
+                          color={COLORS.sproutDark}
+                        />
+                        <Text style={styles.markAnsweredBtnText}>Answered</Text>
+                      </Pressable>
+                    </View>
                   </View>
-                </View>
-              </Pressable>
+                </Pressable>
+              </RevealView>
             );
           })
         )}
@@ -345,7 +358,7 @@ export default function PrayersScreen() {
       {/* Modal: Add a New Prayer Request */}
       <Modal
         visible={showAddModal}
-        animationType="slide"
+        animationType={reduceMotion ? 'none' : 'slide'}
         transparent
         onRequestClose={() => setShowAddModal(false)}>
         <View style={styles.modalBackdrop}>
@@ -374,7 +387,10 @@ export default function PrayersScreen() {
               {CATEGORIES.map((cat) => {
                 const active = newCategory === cat.id;
                 return (
-                  <Pressable
+                  <MotionPressable
+                    feedback="light"
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                     key={cat.id}
                     onPress={() => setNewCategory(cat.id)}
                     style={[
@@ -388,7 +404,7 @@ export default function PrayersScreen() {
                       ]}>
                       {cat.emoji} {cat.label}
                     </Text>
-                  </Pressable>
+                  </MotionPressable>
                 );
               })}
             </ScrollView>
@@ -403,7 +419,8 @@ export default function PrayersScreen() {
               onChangeText={setNewDetails}
             />
 
-            <Pressable
+            <MotionPressable
+              feedback="success"
               style={[
                 styles.primaryModalBtn,
                 !newTitle.trim() && styles.primaryModalBtnDisabled,
@@ -411,7 +428,7 @@ export default function PrayersScreen() {
               onPress={handleCreatePrayer}
               disabled={!newTitle.trim()}>
               <Text style={styles.primaryModalBtnText}>Save to Prayer List</Text>
-            </Pressable>
+            </MotionPressable>
           </View>
         </View>
       </Modal>
@@ -419,7 +436,7 @@ export default function PrayersScreen() {
       {/* Modal: Prayer Details, Journal Notes & Mark Answered */}
       <Modal
         visible={Boolean(selectedPrayer)}
-        animationType="slide"
+        animationType={reduceMotion ? 'none' : 'slide'}
         transparent
         onRequestClose={() => setSelectedPrayerId(null)}>
         <View style={styles.modalBackdrop}>
@@ -480,25 +497,24 @@ export default function PrayersScreen() {
                         style={styles.secondaryBtn}>
                         <Text style={styles.secondaryBtnText}>Cancel</Text>
                       </Pressable>
-                      <Pressable
+                      <MotionPressable
+                        feedback="success"
                         onPress={handleConfirmAnswered}
                         style={styles.confirmAnswerBtn}>
                         <Text style={styles.confirmAnswerBtnText}>
                           Mark Answered & Grow Seed
                         </Text>
-                      </Pressable>
+                      </MotionPressable>
                     </View>
                   </View>
                 ) : (
                   <View style={styles.detailQuickActions}>
-                    <Pressable
+                    <PrayedButton
+                      key={selectedPrayer.id}
+                      large
+                      count={selectedPrayer.prayedCount}
                       onPress={() => recordPrayedNow(selectedPrayer.id)}
-                      style={styles.prayNowBtnLarge}>
-                      <Ionicons name="hand-left" size={16} color="#2A2419" />
-                      <Text style={styles.prayNowBtnText}>
-                        Pray Now ({selectedPrayer.prayedCount})
-                      </Text>
-                    </Pressable>
+                    />
                     <Pressable
                       onPress={() => setShowAnswerForm(true)}
                       style={styles.markAnsweredBtnLarge}>
@@ -527,9 +543,14 @@ export default function PrayersScreen() {
                       value={noteInput}
                       onChangeText={setNoteInput}
                     />
-                    <Pressable onPress={handleAddNote} style={styles.addNoteBtn}>
+                    <MotionPressable
+                      feedback="light"
+                      pop
+                      disabled={!noteInput.trim()}
+                      onPress={handleAddNote}
+                      style={styles.addNoteBtn}>
                       <Text style={styles.addNoteBtnText}>Add</Text>
-                    </Pressable>
+                    </MotionPressable>
                   </View>
 
                   {selectedPrayer.notes.map((note) => (
@@ -556,6 +577,7 @@ export default function PrayersScreen() {
           </View>
         </View>
       </Modal>
+      <CelebrationToast event={celebration} />
     </SafeAreaView>
   );
 }
@@ -861,20 +883,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.surfaceMuted,
   },
-  prayNowBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: COLORS.mustardLight,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  prayNowBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#2A2419',
-  },
   cardRightActions: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1004,16 +1012,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginBottom: 18,
-  },
-  prayNowBtnLarge: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: COLORS.mustardLight,
-    paddingVertical: 12,
-    borderRadius: 12,
   },
   markAnsweredBtnLarge: {
     flex: 1,

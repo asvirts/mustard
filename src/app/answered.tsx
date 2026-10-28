@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { MotionPressable, RevealView } from '@/components/delight';
 import { MustardMascot } from '@/components/mustard-mascot';
 import { CATEGORIES, COLORS, GROWTH_STAGES } from '@/constants/mustard-data';
 import { useMustard } from '@/context/mustard-context';
@@ -45,7 +46,9 @@ export default function AnsweredPrayersScreen() {
         {/* Interactive Mustard Seed Growth Showcase */}
         <View style={styles.mascotShowcaseCard}>
           <View style={styles.showcaseTop}>
-            <MustardMascot stage={displayedStage.stage} size={132} />
+            <RevealView replayKey={displayedStage.stage}>
+              <MustardMascot stage={displayedStage.stage} size={132} />
+            </RevealView>
             <View style={styles.showcaseInfo}>
               <View style={styles.stagePill}>
                 <Text style={styles.stagePillText}>
@@ -68,8 +71,12 @@ export default function AnsweredPrayersScreen() {
               const unlocked = answeredPrayers.length >= st.minAnswered;
               const isSelected = displayedStage.stage === st.stage;
               return (
-                <Pressable
+                <MotionPressable
                   key={st.stage}
+                  feedback="light"
+                  accessibilityRole="button"
+                  accessibilityLabel={`Preview stage ${st.stage}: ${st.name}`}
+                  accessibilityState={{ selected: isSelected }}
                   onPress={() =>
                     setPreviewStage(st.stage === growthStage.stage ? null : st.stage)
                   }
@@ -93,7 +100,7 @@ export default function AnsweredPrayersScreen() {
                     ]}>
                     {st.minAnswered}+
                   </Text>
-                </Pressable>
+                </MotionPressable>
               );
             })}
           </View>
@@ -116,76 +123,78 @@ export default function AnsweredPrayersScreen() {
             </Text>
           </View>
         ) : (
-          answeredPrayers.map((prayer) => {
+          answeredPrayers.map((prayer, index) => {
             const catMeta =
               CATEGORIES.find((c) => c.id === prayer.category) || CATEGORIES[0];
             return (
-              <View key={prayer.id} style={styles.historyCard}>
-                <View style={styles.historyTopRow}>
-                  <View style={styles.answeredDateBadge}>
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={15}
-                      color={COLORS.sproutDark}
-                    />
-                    <Text style={styles.answeredDateText}>
-                      Answered {formatFullDate(prayer.answeredAt || prayer.createdAt)}
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.catBadge,
-                      { backgroundColor: catMeta.bg },
-                    ]}>
-                    <Text style={[styles.catBadgeText, { color: catMeta.color }]}>
-                      {catMeta.emoji} {catMeta.label}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text style={styles.historyTitle}>{prayer.title}</Text>
-                {Boolean(prayer.details) && (
-                  <Text style={styles.historyDetails}>{prayer.details}</Text>
-                )}
-
-                {Boolean(prayer.answeredReflection) && (
-                  <View style={styles.reflectionBox}>
-                    <Text style={styles.reflectionLabel}>HOW IT WAS ANSWERED</Text>
-                    <Text style={styles.reflectionText}>
-                      {prayer.answeredReflection}
-                    </Text>
-                  </View>
-                )}
-
-                <View style={styles.historyFooter}>
-                  <Text style={styles.footerMeta}>
-                    Prayed {prayer.prayedCount}{' '}
-                    {prayer.prayedCount === 1 ? 'time' : 'times'} • Planted{' '}
-                    {formatFullDate(prayer.createdAt)}
-                  </Text>
-                  <View style={styles.footerBtns}>
-                    <Pressable
-                      onPress={() => reopenPrayer(prayer.id)}
-                      style={styles.reopenBtn}>
+              <RevealView key={prayer.id} delay={Math.min(index, 4) * 40}>
+                <View style={styles.historyCard}>
+                  <View style={styles.historyTopRow}>
+                    <View style={styles.answeredDateBadge}>
                       <Ionicons
-                        name="arrow-undo-outline"
-                        size={14}
-                        color={COLORS.textSecondary}
-                      />
-                      <Text style={styles.reopenBtnText}>Move to Active</Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => deletePrayer(prayer.id)}
-                      style={styles.iconBtn}>
-                      <Ionicons
-                        name="trash-outline"
+                        name="checkmark-circle"
                         size={15}
-                        color={COLORS.textMuted}
+                        color={COLORS.sproutDark}
                       />
-                    </Pressable>
+                      <Text style={styles.answeredDateText}>
+                        Answered {formatFullDate(prayer.answeredAt || prayer.createdAt)}
+                      </Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.catBadge,
+                        { backgroundColor: catMeta.bg },
+                      ]}>
+                      <Text style={[styles.catBadgeText, { color: catMeta.color }]}>
+                        {catMeta.emoji} {catMeta.label}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.historyTitle}>{prayer.title}</Text>
+                  {Boolean(prayer.details) && (
+                    <Text style={styles.historyDetails}>{prayer.details}</Text>
+                  )}
+
+                  {Boolean(prayer.answeredReflection) && (
+                    <View style={styles.reflectionBox}>
+                      <Text style={styles.reflectionLabel}>HOW IT WAS ANSWERED</Text>
+                      <Text style={styles.reflectionText}>
+                        {prayer.answeredReflection}
+                      </Text>
+                    </View>
+                  )}
+
+                  <View style={styles.historyFooter}>
+                    <Text style={styles.footerMeta}>
+                      Prayed {prayer.prayedCount}{' '}
+                      {prayer.prayedCount === 1 ? 'time' : 'times'} • Planted{' '}
+                      {formatFullDate(prayer.createdAt)}
+                    </Text>
+                    <View style={styles.footerBtns}>
+                      <MotionPressable
+                        onPress={() => reopenPrayer(prayer.id)}
+                        style={styles.reopenBtn}>
+                        <Ionicons
+                          name="arrow-undo-outline"
+                          size={14}
+                          color={COLORS.textSecondary}
+                        />
+                        <Text style={styles.reopenBtnText}>Move to Active</Text>
+                      </MotionPressable>
+                      <Pressable
+                        onPress={() => deletePrayer(prayer.id)}
+                        style={styles.iconBtn}>
+                        <Ionicons
+                          name="trash-outline"
+                          size={15}
+                          color={COLORS.textMuted}
+                        />
+                      </Pressable>
+                    </View>
                   </View>
                 </View>
-              </View>
+              </RevealView>
             );
           })
         )}

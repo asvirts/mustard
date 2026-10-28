@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CelebrationToast, MotionPressable, RevealView, useReducedMotion } from '@/components/delight';
 import { COLORS } from '@/constants/mustard-data';
 import { useMustard } from '@/context/mustard-context';
 import {
@@ -29,6 +30,7 @@ const PRESET_TIMES = [
 ];
 
 export default function RemindersScreen() {
+  const reduceMotion = useReducedMotion();
   const {
     reminders,
     settings,
@@ -46,6 +48,8 @@ export default function RemindersScreen() {
     'Take a quiet breath and lift up one person on your prayer list.'
   );
   const [testBanner, setTestBanner] = useState<string | null>(null);
+  const [testBannerVersion, setTestBannerVersion] = useState(0);
+  const [celebration, setCelebration] = useState<{ id: number; message: string } | null>(null);
 
   const handleCreateReminder = () => {
     addReminder({
@@ -55,6 +59,10 @@ export default function RemindersScreen() {
       message: newMessage,
     });
     setShowAddModal(false);
+    setCelebration((previous) => ({
+      id: (previous?.id ?? 0) + 1,
+      message: 'A little space for prayer, made.',
+    }));
   };
 
   const handleTestNudge = async () => {
@@ -64,6 +72,7 @@ export default function RemindersScreen() {
         ? '🌱 Gentle nudge sent! Check your device notifications.'
         : '🌱 Gentle nudge preview: “Pause for a quiet breath. Lift up one person on your Mustard prayer list right now.”'
     );
+    setTestBannerVersion((version) => version + 1);
   };
 
   return (
@@ -79,12 +88,13 @@ export default function RemindersScreen() {
               Customizable nudges through the day — meant to invite prayer rather than interrupt it.
             </Text>
           </View>
-          <Pressable
+          <MotionPressable
+            feedback="light"
             onPress={() => setShowAddModal(true)}
             style={styles.addBtn}>
             <Ionicons name="add" size={19} color="#2A2419" />
             <Text style={styles.addBtnText}>Add Nudge</Text>
-          </Pressable>
+          </MotionPressable>
         </View>
 
         {/* Master Toggle & Philosophy Card */}
@@ -110,72 +120,74 @@ export default function RemindersScreen() {
           </View>
 
           <View style={styles.testRow}>
-            <Pressable onPress={handleTestNudge} style={styles.testBtn}>
+            <MotionPressable onPress={handleTestNudge} style={styles.testBtn}>
               <Ionicons
                 name="paper-plane-outline"
                 size={14}
                 color={COLORS.mustardDark}
               />
               <Text style={styles.testBtnText}>Send a Gentle Test Nudge</Text>
-            </Pressable>
+            </MotionPressable>
           </View>
 
           {testBanner && (
-            <View style={styles.testBannerBox}>
+            <RevealView replayKey={testBannerVersion} style={styles.testBannerBox}>
               <Text style={styles.testBannerText}>{testBanner}</Text>
-            </View>
+            </RevealView>
           )}
         </View>
 
         {/* Scheduled Reminders List */}
-        {reminders.map((rem) => {
+        {reminders.map((rem, index) => {
           const isActive = rem.enabled && settings.notificationsEnabled;
           return (
-            <View
-              key={rem.id}
-              style={[
-                styles.reminderCard,
-                !isActive && styles.reminderCardDimmed,
-              ]}>
-              <View style={styles.reminderTop}>
-                <View>
-                  <Text style={styles.reminderTime}>
-                    {formatReminderTime(rem.hour, rem.minute)}
-                  </Text>
-                  <Text style={styles.reminderLabel}>{rem.label}</Text>
-                </View>
-                <Switch
-                  value={rem.enabled}
-                  onValueChange={() => toggleReminder(rem.id)}
-                  trackColor={{ false: COLORS.border, true: COLORS.mustard }}
-                />
-              </View>
-
-              <Text style={styles.reminderMessage}>“{rem.message}”</Text>
-
-              <View style={styles.reminderFooter}>
-                <Text style={styles.reminderFreq}>
-                  {rem.days.length === 7 ? 'Every day' : 'Weekdays'}
-                </Text>
-                <Pressable
-                  onPress={() => deleteReminder(rem.id)}
-                  hitSlop={8}>
-                  <Ionicons
-                    name="trash-outline"
-                    size={16}
-                    color={COLORS.textMuted}
+            <RevealView key={rem.id} delay={Math.min(index, 4) * 40}>
+              <View
+                style={[
+                  styles.reminderCard,
+                  !isActive && styles.reminderCardDimmed,
+                ]}>
+                <View style={styles.reminderTop}>
+                  <View>
+                    <Text style={styles.reminderTime}>
+                      {formatReminderTime(rem.hour, rem.minute)}
+                    </Text>
+                    <Text style={styles.reminderLabel}>{rem.label}</Text>
+                  </View>
+                  <Switch
+                    value={rem.enabled}
+                    onValueChange={() => toggleReminder(rem.id)}
+                    trackColor={{ false: COLORS.border, true: COLORS.mustard }}
                   />
-                </Pressable>
+                </View>
+
+                <Text style={styles.reminderMessage}>“{rem.message}”</Text>
+
+                <View style={styles.reminderFooter}>
+                  <Text style={styles.reminderFreq}>
+                    {rem.days.length === 7 ? 'Every day' : 'Weekdays'}
+                  </Text>
+                  <Pressable
+                    onPress={() => deleteReminder(rem.id)}
+                    hitSlop={8}>
+                    <Ionicons
+                      name="trash-outline"
+                      size={16}
+                      color={COLORS.textMuted}
+                    />
+                  </Pressable>
+                </View>
               </View>
-            </View>
+            </RevealView>
           );
         })}
       </ScrollView>
+      <CelebrationToast event={celebration} />
 
       {/* Modal: Add Custom Gentle Reminder */}
       <Modal
         visible={showAddModal}
-        animationType="slide"
+        animationType={reduceMotion ? 'none' : 'slide'}
         transparent
         onRequestClose={() => setShowAddModal(false)}>
         <View style={styles.modalBackdrop}>
@@ -202,8 +214,11 @@ export default function RemindersScreen() {
                   selectedHour === preset.hour &&
                   selectedMinute === preset.minute;
                 return (
-                  <Pressable
+                  <MotionPressable
                     key={preset.label}
+                    feedback="light"
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
                     onPress={() => {
                       setSelectedHour(preset.hour);
                       setSelectedMinute(preset.minute);
@@ -219,7 +234,7 @@ export default function RemindersScreen() {
                       ]}>
                       {preset.label}
                     </Text>
-                  </Pressable>
+                  </MotionPressable>
                 );
               })}
             </View>
@@ -233,11 +248,11 @@ export default function RemindersScreen() {
               placeholder="Write a warm nudge..."
             />
 
-            <Pressable
+            <MotionPressable
               onPress={handleCreateReminder}
               style={styles.saveModalBtn}>
               <Text style={styles.saveModalBtnText}>Save Reminder</Text>
-            </Pressable>
+            </MotionPressable>
           </View>
         </View>
       </Modal>

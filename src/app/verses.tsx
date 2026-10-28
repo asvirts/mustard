@@ -12,11 +12,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CelebrationToast, MotionPressable, RevealView, useReducedMotion } from '@/components/delight';
 import { COLORS } from '@/constants/mustard-data';
 import { useMustard } from '@/context/mustard-context';
 import { fetchYouVersionPassage } from '@/services/youversion';
 
 export default function VersesScreen() {
+  const reduceMotion = useReducedMotion();
   const {
     verses,
     dailyVerse,
@@ -28,6 +30,7 @@ export default function VersesScreen() {
 
   const [selectedTheme, setSelectedTheme] = useState<string>('All');
   const [onlyBookmarked, setOnlyBookmarked] = useState(false);
+  const [celebration, setCelebration] = useState<{ id: number; message: string } | null>(null);
 
   // YouVersion Platform Config Modal
   const [showApiModal, setShowApiModal] = useState(false);
@@ -58,6 +61,18 @@ export default function VersesScreen() {
       return true;
     });
   }, [verses, onlyBookmarked, selectedTheme]);
+
+  const handleBookmark = (id: string, isBookmarked?: boolean) => {
+    toggleBookmarkVerse(id);
+    if (!isBookmarked) {
+      setCelebration((previous) => ({
+        id: (previous?.id ?? 0) + 1,
+        message: 'A little encouragement, saved.',
+      }));
+    } else {
+      setCelebration(null);
+    }
+  };
 
   const handleSaveApiConfig = async () => {
     const parsedBibleId = Number.parseInt(bibleIdInput, 10) || 3034;
@@ -157,19 +172,26 @@ export default function VersesScreen() {
         </View>
 
         {/* Highlighted Verse of the Day Card */}
-        <View style={styles.featuredVerseCard}>
+        <RevealView style={styles.featuredVerseCard}>
           <View style={styles.featuredTopRow}>
             <View style={styles.featuredBadge}>
               <Ionicons name="sunny" size={14} color={COLORS.mustardDark} />
               <Text style={styles.featuredBadgeText}>TODAY’S MUSTARD SEED VERSE</Text>
             </View>
-            <Pressable onPress={() => toggleBookmarkVerse(dailyVerse.id)}>
+            <MotionPressable
+              pop
+              feedback="light"
+              accessibilityRole="button"
+              accessibilityLabel={`${dailyVerse.isBookmarked ? 'Remove' : 'Save'} ${dailyVerse.reference} ${dailyVerse.isBookmarked ? 'from' : 'to'} saved verses`}
+              accessibilityState={{ selected: dailyVerse.isBookmarked }}
+              hitSlop={8}
+              onPress={() => handleBookmark(dailyVerse.id, dailyVerse.isBookmarked)}>
               <Ionicons
                 name={dailyVerse.isBookmarked ? 'bookmark' : 'bookmark-outline'}
                 size={20}
                 color={COLORS.mustardDark}
               />
-            </Pressable>
+            </MotionPressable>
           </View>
 
           <Text style={styles.featuredText}>{dailyVerse.text}</Text>
@@ -183,14 +205,18 @@ export default function VersesScreen() {
                 : 'YouVersion • BSB'}
             </Text>
           </View>
-        </View>
+        </RevealView>
 
         {/* Theme & Bookmark Filter Row */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterRow}>
-          <Pressable
+          <MotionPressable
+            feedback="light"
+            accessibilityRole="button"
+            accessibilityLabel="Show saved verses"
+            accessibilityState={{ selected: onlyBookmarked }}
             onPress={() => setOnlyBookmarked((prev) => !prev)}
             style={[
               styles.filterChip,
@@ -208,13 +234,17 @@ export default function VersesScreen() {
               ]}>
               Saved
             </Text>
-          </Pressable>
+          </MotionPressable>
 
           {themes.map((theme) => {
             const active = selectedTheme === theme;
             return (
-              <Pressable
+              <MotionPressable
                 key={theme}
+                feedback="light"
+                accessibilityRole="button"
+                accessibilityLabel={`Show ${theme === 'All' ? 'all verses' : `${theme} verses`}`}
+                accessibilityState={{ selected: active }}
                 onPress={() => setSelectedTheme(theme)}
                 style={[styles.filterChip, active && styles.filterChipActive]}>
                 <Text
@@ -224,20 +254,25 @@ export default function VersesScreen() {
                   ]}>
                   {theme}
                 </Text>
-              </Pressable>
+              </MotionPressable>
             );
           })}
         </ScrollView>
 
         {/* Verse Cards List */}
-        {filteredVerses.map((verse) => (
-          <View key={verse.id} style={styles.verseCard}>
+        {filteredVerses.map((verse, index) => (
+          <RevealView key={verse.id} style={styles.verseCard} delay={Math.min(index, 4) * 40}>
             <View style={styles.verseCardTop}>
               <View style={styles.themePill}>
                 <Text style={styles.themePillText}>{verse.theme}</Text>
               </View>
-              <Pressable
-                onPress={() => toggleBookmarkVerse(verse.id)}
+              <MotionPressable
+                pop
+                feedback="light"
+                accessibilityRole="button"
+                accessibilityLabel={`${verse.isBookmarked ? 'Remove' : 'Save'} ${verse.reference} ${verse.isBookmarked ? 'from' : 'to'} saved verses`}
+                accessibilityState={{ selected: verse.isBookmarked }}
+                onPress={() => handleBookmark(verse.id, verse.isBookmarked)}
                 hitSlop={8}>
                 <Ionicons
                   name={verse.isBookmarked ? 'bookmark' : 'bookmark-outline'}
@@ -246,7 +281,7 @@ export default function VersesScreen() {
                     verse.isBookmarked ? COLORS.mustardDark : COLORS.textMuted
                   }
                 />
-              </Pressable>
+              </MotionPressable>
             </View>
 
             <Text style={styles.verseCardBody}>{verse.text}</Text>
@@ -257,7 +292,7 @@ export default function VersesScreen() {
               </Text>
               <Text style={styles.verseUsfmTag}>USFM: {verse.usfm}</Text>
             </View>
-          </View>
+          </RevealView>
         ))}
 
         {/* Live YouVersion Passage Lookup Box */}
@@ -304,10 +339,12 @@ export default function VersesScreen() {
         </View>
       </ScrollView>
 
+      <CelebrationToast event={celebration} />
+
       {/* Modal: YouVersion Platform API Key & Bible Settings */}
       <Modal
         visible={showApiModal}
-        animationType="slide"
+        animationType={reduceMotion ? 'none' : 'slide'}
         transparent
         onRequestClose={() => setShowApiModal(false)}>
         <View style={styles.modalBackdrop}>
