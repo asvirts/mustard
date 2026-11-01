@@ -13,6 +13,7 @@ import { MotionPressable, RevealView } from '@/components/delight';
 import { MustardMascot } from '@/components/mustard-mascot';
 import { CATEGORIES, COLORS, GROWTH_STAGES } from '@/constants/mustard-data';
 import { useMustard } from '@/context/mustard-context';
+import { confirmDestructive } from '@/utils/ui';
 
 function formatFullDate(iso?: string): string {
   if (!iso) return '';
@@ -195,7 +196,13 @@ export default function AnsweredPrayersScreen() {
                         <Text style={styles.reopenBtnText}>Restore</Text>
                       </MotionPressable>
                       <Pressable
-                        onPress={() => deletePrayer(prayer.id)}
+                        onPress={() =>
+                          confirmDestructive({
+                            title: 'Delete this answered prayer?',
+                            message: `"${prayer.title}" will be permanently removed from your history.`,
+                            onConfirm: () => deletePrayer(prayer.id),
+                          })
+                        }
                         hitSlop={8}
                         style={styles.iconBtn}>
                         <Ionicons

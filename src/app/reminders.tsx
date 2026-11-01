@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CelebrationToast, MotionPressable, RevealView, useReducedMotion } from '@/components/delight';
+import { LIMITS } from '@/constants/limits';
 import { COLORS } from '@/constants/mustard-data';
 import { useMustard } from '@/context/mustard-context';
 import {
@@ -38,7 +39,18 @@ export default function RemindersScreen() {
     toggleReminder,
     deleteReminder,
     updateSettings,
+    enableReminderNotifications,
   } = useMustard();
+
+  // Ask for notification permission in context (when the user opens Reminders),
+  // rather than on app launch.
+  useEffect(() => {
+    if (settings.notificationsEnabled) {
+      enableReminderNotifications();
+    }
+    // Only on first visit to this screen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [newLabel, setNewLabel] = useState('Afternoon Pause');
@@ -58,6 +70,7 @@ export default function RemindersScreen() {
       minute: selectedMinute,
       message: newMessage,
     });
+    enableReminderNotifications();
     setShowAddModal(false);
     setCelebration((previous) => ({
       id: (previous?.id ?? 0) + 1,
@@ -112,9 +125,12 @@ export default function RemindersScreen() {
             </View>
             <Switch
               value={settings.notificationsEnabled}
-              onValueChange={(val) =>
-                updateSettings({ notificationsEnabled: val })
-              }
+              onValueChange={(val) => {
+                updateSettings({ notificationsEnabled: val });
+                if (val) {
+                  enableReminderNotifications();
+                }
+              }}
               trackColor={{ false: COLORS.border, true: COLORS.sprout }}
             />
           </View>
@@ -210,6 +226,7 @@ export default function RemindersScreen() {
             <TextInput
               style={styles.textInput}
               value={newLabel}
+              maxLength={LIMITS.REMINDER_LABEL}
               onChangeText={setNewLabel}
               placeholder="e.g., Afternoon Pause"
             />
@@ -250,6 +267,7 @@ export default function RemindersScreen() {
             <TextInput
               style={[styles.textInput, styles.textArea]}
               value={newMessage}
+              maxLength={LIMITS.REMINDER_MESSAGE}
               onChangeText={setNewMessage}
               multiline
               placeholder="Write a warm nudge..."

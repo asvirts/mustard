@@ -1,7 +1,16 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import * as Crypto from 'expo-crypto';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { CURATED_VERSES, getGrowthStage } from '@/constants/mustard-data';
-import { syncScheduledReminders } from '@/services/notifications';
+import { LIMITS } from '@/constants/limits';
+import { requestReminderPermissions, syncScheduledReminders } from '@/services/notifications';
 import {
   DEFAULT_SETTINGS,
   loadInitialData,
@@ -10,7 +19,11 @@ import {
   saveReminders,
   saveSettings,
 } from '@/services/storage';
-import { getDailyEncouragingVerse, hydrateVerseFromYouVersion } from '@/services/youversion';
+import {
+  getDailyEncouragingVerse,
+  hydrateVersesFromYouVersion,
+  resolveYouVersionAppKey,
+} from '@/services/youversion';
 import {
   EncouragingVerse,
   GrowthStage,
@@ -62,7 +75,11 @@ interface MustardContextValue {
   toggleBookmarkVerse: (verseId: string) => void;
   updateSettings: (partial: Partial<MustardSettings>) => void;
   refreshVersesFromYouVersion: () => Promise<number>;
+  /** Prompts for notification permission (user-initiated only) and reschedules reminders. */
+  enableReminderNotifications: () => Promise<boolean>;
 }
+
+const newId = (prefix: string) => `${prefix}-${Crypto.randomUUID()}`;
 
 const MustardContext = createContext<MustardContextValue | null>(null);
 
@@ -73,6 +90,7 @@ export function MustardProvider({ children }: { children: React.ReactNode }) {
   const [bookmarkedVerseIds, setBookmarkedVerseIds] = useState<string[]>([]);
   const [settings, setSettings] = useState<MustardSettings>(DEFAULT_SETTINGS);
   const [verses, setVerses] = useState<EncouragingVerse[]>(CURATED_VERSES);
+  const [permissionVersion, setPermissionVersion] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -92,7 +110,31 @@ export function MustardProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isReady) return;
     syncScheduledReminders(reminders, settings.notificationsEnabled);
-  }, [isReady, reminders, settings.notificationsEnabled]);
+  }, [isReady, reminders, settings.notificationsEnabled, permissionVersion]);
+
+  // Persistence lives in effects (not inside state updaters, which must stay pure).
+  // Writes for each key are serialized in the storage layer.
+  useEffect(() => {
+    if (isReady) savePrayers(prayers);
+  }, [isReady, prayers]);
+
+  useEffect(() => {
+    if (isReady) saveReminders(reminders);
+  }, [isReady, reminders]);
+
+  useEffect(() => {
+    if (isReady) saveBookmarks(bookmarkedVerseIds);
+  }, [isReady, bookmarkedVerseIds]);
+
+  useEffect(() => {
+    if (isReady) saveSettings(settings);
+  }, [isReady, settings]);
+
+  const enableReminderNotifications = useCallback(async () => {
+    const granted = await requestReminderPermissions();
+    setPermissionVersion((v) => v + 1);
+    return granted;
+  }, []);
 
   const activePrayers = useMemo(
     () =>
@@ -143,20 +185,16 @@ export function MustardProvider({ children }: { children: React.ReactNode }) {
   );
 
   const persistPrayers = useCallback((updater: (prev: PrayerRequest[]) => PrayerRequest[]) => {
-    setPrayers((prev) => {
-      const next = updater(prev);
-      savePrayers(next);
-      return next;
-    });
+    setPrayers(updater);
   }, []);
 
   const addPrayer = useCallback(
     (input: { title: string; details: string; category: PrayerCategory }) => {
       const now = new Date().toISOString();
       const newPrayer: PrayerRequest = {
-        id: `prayer-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        title: input.title.trim(),
-        details: input.details.trim(),
+        id: newId('prayer'),
+        title: input.title.trim().slice(0, LIMITS.PRAYER_TITLE),
+        details: input.details.trim().slice(0, LIMITS.PRAYER_DETAILS),
         category: input.category,
         createdAt: now,
         prayedCount: 1,
@@ -208,10 +246,10 @@ export function MustardProvider({ children }: { children: React.ReactNode }) {
 
   const addPrayerNote = useCallback(
     (prayerId: string, text: string) => {
-      const trimmed = text.trim();
+      const trimmed = text.trim().slice(0, LIMITS.NOTE);
       if (!trimmed) return;
       const newNote = {
-        id: `note-${Date.now()}`,
+        id: newId('note'),
         text: trimmed,
         createdAt: new Date().toISOString(),
       };
@@ -234,7 +272,8 @@ export function MustardProvider({ children }: { children: React.ReactNode }) {
                 ...p,
                 isAnswered: true,
                 answeredAt,
-                answeredReflection: reflection?.trim() || p.answeredReflection,
+                answeredReflection:
+                  reflection?.trim().slice(0, LIMITS.REFLECTION) || p.answeredReflection,
               }
             : p
         )
@@ -269,82 +308,56 @@ export function MustardProvider({ children }: { children: React.ReactNode }) {
       days?: number[];
     }) => {
       const newReminder: ReminderItem = {
-        id: `rem-${Date.now()}`,
-        label: input.label.trim() || 'Prayer Nudge',
+        id: newId('rem'),
+        label: input.label.trim().slice(0, LIMITS.REMINDER_LABEL) || 'Prayer Nudge',
         hour: input.hour,
         minute: input.minute,
         enabled: true,
         message:
-          input.message.trim() ||
+          input.message.trim().slice(0, LIMITS.REMINDER_MESSAGE) ||
           'Pause for a quiet breath and lift up a prayer on your list.',
         days: input.days || [0, 1, 2, 3, 4, 5, 6],
       };
-      setReminders((prev) => {
-        const next = [...prev, newReminder].sort(
+      setReminders((prev) =>
+        [...prev, newReminder].sort(
           (a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute)
-        );
-        saveReminders(next);
-        return next;
-      });
+        )
+      );
     },
     []
   );
 
   const toggleReminder = useCallback((id: string) => {
-    setReminders((prev) => {
-      const next = prev.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r));
-      saveReminders(next);
-      return next;
-    });
+    setReminders((prev) => prev.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
   }, []);
 
   const deleteReminder = useCallback((id: string) => {
-    setReminders((prev) => {
-      const next = prev.filter((r) => r.id !== id);
-      saveReminders(next);
-      return next;
-    });
+    setReminders((prev) => prev.filter((r) => r.id !== id));
   }, []);
 
   const toggleBookmarkVerse = useCallback((verseId: string) => {
-    setBookmarkedVerseIds((prev) => {
-      const exists = prev.includes(verseId);
-      const next = exists ? prev.filter((id) => id !== verseId) : [...prev, verseId];
-      saveBookmarks(next);
-      return next;
-    });
+    setBookmarkedVerseIds((prev) =>
+      prev.includes(verseId) ? prev.filter((id) => id !== verseId) : [...prev, verseId]
+    );
   }, []);
 
   const updateSettings = useCallback((partial: Partial<MustardSettings>) => {
-    setSettings((prev) => {
-      const next = { ...prev, ...partial };
-      saveSettings(next);
-      return next;
-    });
+    setSettings((prev) => ({ ...prev, ...partial }));
   }, []);
 
   const refreshVersesFromYouVersion = useCallback(async () => {
-    const key = settings.youVersionAppKey.trim() || process.env.EXPO_PUBLIC_YVP_APP_KEY || '';
+    const key = resolveYouVersionAppKey(settings.youVersionAppKey);
     if (!key) {
       return 0;
     }
-    let updatedCount = 0;
-    const nextVerses = await Promise.all(
-      CURATED_VERSES.map(async (verse) => {
-        const hydrated = await hydrateVerseFromYouVersion(
-          verse,
-          key,
-          settings.preferredBibleId,
-          settings.preferredBibleAbbrev
-        );
-        if (hydrated.source === 'youversion-api') {
-          updatedCount += 1;
-        }
-        return hydrated;
-      })
+    const nextVerses = await hydrateVersesFromYouVersion(
+      CURATED_VERSES,
+      key,
+      settings.preferredBibleId,
+      settings.preferredBibleAbbrev
     );
     setVerses(nextVerses);
-    return updatedCount;
+    return nextVerses.filter((v) => v.source === 'youversion-api').length;
   }, [settings.youVersionAppKey, settings.preferredBibleId, settings.preferredBibleAbbrev]);
 
   const value = useMemo<MustardContextValue>(
@@ -373,6 +386,7 @@ export function MustardProvider({ children }: { children: React.ReactNode }) {
       toggleBookmarkVerse,
       updateSettings,
       refreshVersesFromYouVersion,
+      enableReminderNotifications,
     }),
     [
       isReady,
@@ -399,6 +413,7 @@ export function MustardProvider({ children }: { children: React.ReactNode }) {
       toggleBookmarkVerse,
       updateSettings,
       refreshVersesFromYouVersion,
+      enableReminderNotifications,
     ]
   );
 

@@ -2,6 +2,40 @@ import { Platform } from 'react-native';
 
 import { ReminderItem } from '@/types/mustard';
 
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+
+type NotificationsModule = typeof import('expo-notifications');
+let handlerConfigured = false;
+
+async function loadNotifications(): Promise<NotificationsModule> {
+  const Notifications = await import('expo-notifications');
+  if (!handlerConfigured) {
+    // Without a handler, notifications fired while the app is open are not shown.
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+    handlerConfigured = true;
+  }
+  return Notifications;
+}
+
+async function hasReminderPermission(Notifications: NotificationsModule): Promise<boolean> {
+  const settings = await Notifications.getPermissionsAsync();
+  return (
+    settings.granted ||
+    settings.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL
+  );
+}
+
+/**
+ * Asks the user for notification permission. Only call this in response to a user
+ * action (enabling reminders, adding a nudge, sending a test) — never on launch.
+ */
 export async function requestReminderPermissions(): Promise<boolean> {
   if (Platform.OS === 'web') {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -15,12 +49,8 @@ export async function requestReminderPermissions(): Promise<boolean> {
   }
 
   try {
-    const Notifications = await import('expo-notifications');
-    const settings = await Notifications.getPermissionsAsync();
-    if (
-      settings.granted ||
-      settings.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL
-    ) {
+    const Notifications = await loadNotifications();
+    if (await hasReminderPermission(Notifications)) {
       return true;
     }
     const requested = await Notifications.requestPermissionsAsync();
@@ -30,24 +60,25 @@ export async function requestReminderPermissions(): Promise<boolean> {
   }
 }
 
-export async function syncScheduledReminders(
+async function scheduleAll(
   reminders: ReminderItem[],
   notificationsEnabled: boolean
 ): Promise<number> {
   if (Platform.OS === 'web') {
-    return reminders.filter((r) => r.enabled).length;
+    // Web has no scheduled local notifications; nothing is actually scheduled.
+    return 0;
   }
 
   try {
-    const Notifications = await import('expo-notifications');
+    const Notifications = await loadNotifications();
     await Notifications.cancelAllScheduledNotificationsAsync();
 
     if (!notificationsEnabled) {
       return 0;
     }
 
-    const granted = await requestReminderPermissions();
-    if (!granted) {
+    // Never prompt here: this runs automatically on launch and on every change.
+    if (!(await hasReminderPermission(Notifications))) {
       return 0;
     }
 
@@ -56,24 +87,54 @@ export async function syncScheduledReminders(
       if (!reminder.enabled) {
         continue;
       }
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: `🌱 ${reminder.label}`,
-          body: reminder.message,
-          sound: true,
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DAILY,
-          hour: reminder.hour,
-          minute: reminder.minute,
-        },
-      });
+      const content = {
+        title: `🌱 ${reminder.label}`,
+        body: reminder.message,
+        sound: true,
+      };
+      const days = Array.from(new Set(reminder.days?.length ? reminder.days : ALL_DAYS));
+
+      if (days.length === 7) {
+        await Notifications.scheduleNotificationAsync({
+          content,
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour: reminder.hour,
+            minute: reminder.minute,
+          },
+        });
+      } else {
+        for (const day of days) {
+          await Notifications.scheduleNotificationAsync({
+            content,
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+              weekday: day + 1, // expo-notifications: 1 = Sunday ... 7 = Saturday
+              hour: reminder.hour,
+              minute: reminder.minute,
+            },
+          });
+        }
+      }
       scheduledCount += 1;
     }
     return scheduledCount;
   } catch {
-    return reminders.filter((r) => r.enabled).length;
+    return 0;
   }
+}
+
+// Serializes sync runs so overlapping cancel/schedule sequences can't interleave
+// and leave duplicate notifications behind.
+let syncQueue: Promise<number> = Promise.resolve(0);
+
+export function syncScheduledReminders(
+  reminders: ReminderItem[],
+  notificationsEnabled: boolean
+): Promise<number> {
+  const run = syncQueue.then(() => scheduleAll(reminders, notificationsEnabled));
+  syncQueue = run.catch(() => 0);
+  return run;
 }
 
 export async function sendTestGentleNudge(message?: string): Promise<boolean> {
@@ -92,7 +153,7 @@ export async function sendTestGentleNudge(message?: string): Promise<boolean> {
   }
 
   try {
-    const Notifications = await import('expo-notifications');
+    const Notifications = await loadNotifications();
     const granted = await requestReminderPermissions();
     if (!granted) {
       return false;

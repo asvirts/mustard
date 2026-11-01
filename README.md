@@ -25,7 +25,7 @@ A *pip* is a tiny seed — and the name of the app's little yellow mustard-seed 
 ## Tech Stack
 
 - **Framework:** React Native + Expo (`expo-router`, TypeScript) — runs on iOS, Android, and Web
-- **Local Persistence:** Local-first on-device storage (`expo-sqlite` on iOS/Android with `AsyncStorage` fallback on Web)
+- **Local Persistence:** Local-first on-device storage (`expo-sqlite` on iOS/Android, `AsyncStorage` on Web); secrets in `expo-secure-store`
 - **Notifications:** `expo-notifications` for daily scheduled gentle prayer nudges
 - **Scripture:** [YouVersion Platform](https://developers.youversion.com/) REST API (`GET /v1/bibles/{bible_id}/passages/{passage_id}`) + offline New International Version (`bible_id: 111`) passages
 - **Illustrations:** `react-native-svg` custom 6-stage Mustard Seed mascot
@@ -47,7 +47,8 @@ A *pip* is a tiny seed — and the name of the app's little yellow mustard-seed 
 
 3. **Optional — Connect a Live YouVersion Platform App Key:**
    - Register for an App Key at [developers.youversion.com](https://developers.youversion.com/).
-   - Either set `EXPO_PUBLIC_YVP_APP_KEY=your_key_here` in a `.env.local` file, or tap **YouVersion API** in the **Verses** tab inside the app to enter your key and preferred Bible version ID.
+   - Tap **YouVersion API** in the **Verses** tab inside the app to enter your key and preferred Bible version ID. On iOS/Android the key is stored in the Keychain/Keystore via `expo-secure-store`; on web it is kept in memory for the session only.
+   - For local development only, you can instead set `EXPO_PUBLIC_YVP_APP_KEY=your_key_here` in a `.env.local` file. This fallback is ignored in production builds, because `EXPO_PUBLIC_*` values are embedded in the JavaScript bundle and readable by anyone. Never ship a key that way; route requests through a backend proxy if the app needs a shared key.
 
 ## Project Structure
 

@@ -14,9 +14,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MustardMascot } from '@/components/mustard-mascot';
 import { PrayedButton } from '@/components/prayed-button';
 import { CelebrationToast, MotionPressable, RevealView, useReducedMotion } from '@/components/delight';
+import { LIMITS } from '@/constants/limits';
 import { CATEGORIES, COLORS } from '@/constants/mustard-data';
 import { useMustard } from '@/context/mustard-context';
 import { PrayerCategory, PrayerRequest } from '@/types/mustard';
+import { confirmDestructive, localDateString } from '@/utils/ui';
 
 function formatRelativeDate(iso?: string): string {
   if (!iso) return '';
@@ -63,7 +65,7 @@ export default function PrayersScreen() {
   const [noteInput, setNoteInput] = useState('');
   const [answeredReflectionInput, setAnsweredReflectionInput] = useState('');
   const [answeredDateInput, setAnsweredDateInput] = useState(
-    new Date().toISOString().slice(0, 10)
+    localDateString()
   );
   const [showAnswerForm, setShowAnswerForm] = useState(false);
 
@@ -289,7 +291,7 @@ export default function PrayersScreen() {
                   onPress={() => {
                     setSelectedPrayerId(prayer.id);
                     setShowAnswerForm(false);
-                    setAnsweredDateInput(new Date().toISOString().slice(0, 10));
+                    setAnsweredDateInput(localDateString());
                   }}
                   style={styles.prayerCard}>
                   <View style={styles.prayerCardTop}>
@@ -339,7 +341,7 @@ export default function PrayersScreen() {
                           e.stopPropagation();
                           setSelectedPrayerId(prayer.id);
                           setShowAnswerForm(true);
-                          setAnsweredDateInput(new Date().toISOString().slice(0, 10));
+                          setAnsweredDateInput(localDateString());
                         }}
                         style={styles.markAnsweredBtn}>
                         <Ionicons
@@ -383,6 +385,7 @@ export default function PrayersScreen() {
               placeholder="e.g., Peace for Sarah’s upcoming interview"
               placeholderTextColor={COLORS.textMuted}
               value={newTitle}
+              maxLength={LIMITS.PRAYER_TITLE}
               onChangeText={setNewTitle}
             />
 
@@ -423,6 +426,7 @@ export default function PrayersScreen() {
               placeholderTextColor={COLORS.textMuted}
               multiline
               value={newDetails}
+              maxLength={LIMITS.PRAYER_DETAILS}
               onChangeText={setNewDetails}
             />
 
@@ -489,6 +493,7 @@ export default function PrayersScreen() {
                     <TextInput
                       style={styles.textInput}
                       value={answeredDateInput}
+                      maxLength={LIMITS.DATE}
                       onChangeText={setAnsweredDateInput}
                       placeholder="YYYY-MM-DD"
                       placeholderTextColor={COLORS.textMuted}
@@ -502,6 +507,7 @@ export default function PrayersScreen() {
                       placeholderTextColor={COLORS.textMuted}
                       multiline
                       value={answeredReflectionInput}
+                      maxLength={LIMITS.REFLECTION}
                       onChangeText={setAnsweredReflectionInput}
                     />
                     <View style={styles.answerFormActions}>
@@ -554,6 +560,7 @@ export default function PrayersScreen() {
                       placeholder="Add an update or reflection..."
                       placeholderTextColor={COLORS.textMuted}
                       value={noteInput}
+                      maxLength={LIMITS.NOTE}
                       onChangeText={setNoteInput}
                     />
                     <MotionPressable
@@ -581,8 +588,16 @@ export default function PrayersScreen() {
 
                 <Pressable
                   onPress={() => {
-                    deletePrayer(selectedPrayer.id);
-                    setSelectedPrayerId(null);
+                    const id = selectedPrayer.id;
+                    confirmDestructive({
+                      title: 'Remove this prayer?',
+                      message: `"${selectedPrayer.title}" and its notes will be permanently deleted.`,
+                      confirmLabel: 'Remove',
+                      onConfirm: () => {
+                        deletePrayer(id);
+                        setSelectedPrayerId(null);
+                      },
+                    });
                   }}
                   style={styles.deletePrayerBtn}>
                   <Ionicons name="trash-outline" size={15} color={COLORS.danger} />

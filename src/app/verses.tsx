@@ -13,9 +13,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CelebrationToast, MotionPressable, RevealView, useReducedMotion } from '@/components/delight';
+import { LIMITS } from '@/constants/limits';
 import { COLORS } from '@/constants/mustard-data';
 import { useMustard } from '@/context/mustard-context';
-import { fetchYouVersionPassage } from '@/services/youversion';
+import {
+  fetchYouVersionPassage,
+  isValidUsfm,
+  resolveYouVersionAppKey,
+} from '@/services/youversion';
 
 export default function VersesScreen() {
   const reduceMotion = useReducedMotion();
@@ -75,11 +80,13 @@ export default function VersesScreen() {
   };
 
   const handleSaveApiConfig = async () => {
-    const parsedBibleId = Number.parseInt(bibleIdInput, 10) || 111;
+    const rawBibleId = Number.parseInt(bibleIdInput, 10);
+    const parsedBibleId =
+      Number.isInteger(rawBibleId) && rawBibleId > 0 && rawBibleId <= 999999 ? rawBibleId : 111;
     updateSettings({
-      youVersionAppKey: apiKeyInput.trim(),
+      youVersionAppKey: apiKeyInput.trim().slice(0, LIMITS.API_KEY),
       preferredBibleId: parsedBibleId,
-      preferredBibleAbbrev: bibleAbbrevInput.trim() || 'NIV',
+      preferredBibleAbbrev: bibleAbbrevInput.trim().slice(0, LIMITS.BIBLE_ABBREV) || 'NIV',
     });
 
     if (apiKeyInput.trim()) {
@@ -101,9 +108,14 @@ export default function VersesScreen() {
   };
 
   const handleCustomUsfmLookup = async () => {
-    const key = settings.youVersionAppKey.trim() || process.env.EXPO_PUBLIC_YVP_APP_KEY || '';
+    const key = resolveYouVersionAppKey(settings.youVersionAppKey);
     if (!key) {
       setLookupError('Add your YouVersion Platform App Key first to fetch live USFM passages.');
+      return;
+    }
+    const usfm = customUsfm.trim().toUpperCase();
+    if (!isValidUsfm(usfm)) {
+      setLookupError('Enter a USFM reference like MAT.17.20 or PSA.23.1-3.');
       return;
     }
     setIsLookingUp(true);
@@ -112,7 +124,7 @@ export default function VersesScreen() {
       const res = await fetchYouVersionPassage({
         appKey: key,
         bibleId: settings.preferredBibleId,
-        usfm: customUsfm.trim().toUpperCase(),
+        usfm,
       });
       if (res) {
         setCustomLookupResult({
@@ -127,9 +139,7 @@ export default function VersesScreen() {
     }
   };
 
-  const hasApiKey = Boolean(
-    settings.youVersionAppKey.trim() || process.env.EXPO_PUBLIC_YVP_APP_KEY
-  );
+  const hasApiKey = Boolean(resolveYouVersionAppKey(settings.youVersionAppKey));
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -304,6 +314,7 @@ export default function VersesScreen() {
             <TextInput
               style={styles.lookupInput}
               value={customUsfm}
+              maxLength={LIMITS.USFM}
               onChangeText={setCustomUsfm}
               placeholder="MAT.17.20"
               placeholderTextColor={COLORS.textMuted}
@@ -365,11 +376,15 @@ export default function VersesScreen() {
             <TextInput
               style={styles.textInput}
               value={apiKeyInput}
+              maxLength={LIMITS.API_KEY}
               onChangeText={setApiKeyInput}
               placeholder="Paste your X-YVP-App-Key..."
               placeholderTextColor={COLORS.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
+              autoComplete="off"
+              secureTextEntry
+              textContentType="none"
             />
 
             <View style={styles.rowInputs}>
@@ -378,6 +393,7 @@ export default function VersesScreen() {
                 <TextInput
                   style={styles.textInput}
                   value={bibleIdInput}
+                  maxLength={LIMITS.BIBLE_ID}
                   onChangeText={setBibleIdInput}
                   keyboardType="number-pad"
                   placeholder="111"
@@ -388,6 +404,7 @@ export default function VersesScreen() {
                 <TextInput
                   style={styles.textInput}
                   value={bibleAbbrevInput}
+                  maxLength={LIMITS.BIBLE_ABBREV}
                   onChangeText={setBibleAbbrevInput}
                   placeholder="NIV"
                 />
